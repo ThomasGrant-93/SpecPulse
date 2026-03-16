@@ -42,17 +42,6 @@ jobs:
           cache: 'npm'
           cache-dependency-path: specpulse-frontend/package-lock.json
 
-      - name: Start PostgreSQL for tests
-        run: |
-          docker run -d \
-            -e POSTGRES_DB=specpulse_test \
-            -e POSTGRES_USER=specpulse \
-            -e POSTGRES_PASSWORD=specpulse \
-            -p 5432:5432 \
-            --name postgres-test \
-            postgres:15-alpine
-          sleep 5
-
       - name: Build Backend
         run: ./gradlew :specpulse-backend:build -x test
 
@@ -105,6 +94,10 @@ jobs:
           node-version: '18'
           cache: 'npm'
           cache-dependency-path: specpulse-frontend/package-lock.json
+
+      - name: Install Frontend Dependencies
+        working-directory: specpulse-frontend
+        run: npm ci
 
       - name: Check Backend Code Style
         run: ./gradlew :specpulse-backend:checkstyleMain :specpulse-backend:checkstyleTest
