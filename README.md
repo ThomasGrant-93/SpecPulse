@@ -82,7 +82,7 @@ teams track API changes, detect breaking changes, and maintain API documentation
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-org/specpulse.git
+git clone https://github.com/ThomasGrant-93/specpulse.git
 cd specpulse
 
 # Start PostgreSQL database
