@@ -276,9 +276,8 @@ utils/          # Utility functions
 
 ## 💬 Questions?
 
-- **General questions:** [GitHub Discussions](https://github.com/your-org/specpulse/discussions)
-- **Bug reports:** [GitHub Issues](https://github.com/your-org/specpulse/issues)
-- **Chat:** [Discord/Slack link if available]
+- **General questions:** [GitHub Discussions](https://github.com/ThomasGrant-93/specpulse/discussions)
+- **Bug reports:** [GitHub Issues](https://github.com/ThomasGrant-93/specpulse/issues)
 
 ## 🙏 Thank You!
 

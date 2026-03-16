@@ -1,6 +1,6 @@
 # SpecPulse
 
-[![Build](https://img.shields.io/github/actions/workflow/status/your-org/specpulse/ci.yml?branch=main)](https://github.com/your-org/specpulse/actions)
+[![Build](https://img.shields.io/github/actions/workflow/status/ThomasGrant-93/specpulse/ci.yml?branch=master)](https://github.com/your-org/specpulse/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Java](https://img.shields.io/badge/Java-17-blue)](https://adoptium.net/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4-brightgreen)](https://spring.io/projects/spring-boot)
@@ -333,5 +333,5 @@ This project is licensed under the [MIT License](LICENSE).
 ## 📞 Support
 
 - **Documentation:** [Swagger UI](http://localhost:8080/swagger-ui.html)
-- **Issues:** [GitHub Issues](https://github.com/your-org/specpulse/issues)
-- **Discussions:** [GitHub Discussions](https://github.com/your-org/specpulse/discussions)
+- **Issues:** [GitHub Issues](https://github.com/ThomasGrant-93/specpulse/issues)
+- **Discussions:** [GitHub Discussions](https://github.com/ThomasGrant-93/specpulse/discussions)
