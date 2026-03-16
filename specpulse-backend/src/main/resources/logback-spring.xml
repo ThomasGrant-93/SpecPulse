@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="true" scanPeriod="30 seconds">
+
+    <!-- Include Spring Boot defaults -->
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+    <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
+
+    <!-- Application name -->
+    <springProperty scope="context" name="APP_NAME" source="spring.application.name" defaultValue="specpulse"/>
+
+    <!-- Console Appender with JSON format -->
+    <appender name="JSON_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <!-- Timestamp -->
+                <timestamp>
+                    <timeZone>UTC</timeZone>
+                    <fieldName>@timestamp</fieldName>
+                </timestamp>
+
+                <!-- Log level -->
+                <logLevel>
+                    <fieldName>level</fieldName>
+                </logLevel>
+
+                <!-- Thread name -->
+                <threadName>
+                    <fieldName>thread</fieldName>
+                </threadName>
+
+                <!-- Logger name -->
+                <loggerName>
+                    <fieldName>logger</fieldName>
+                </loggerName>
+
+                <!-- Message -->
+                <message>
+                    <fieldName>message</fieldName>
+                </message>
+
+                <!-- MDC fields -->
+                <mdc>
+                    <fieldName>mdc</fieldName>
+                </mdc>
+
+                <!-- Stack trace -->
+                <stackTrace>
+                    <fieldName>stack_trace</fieldName>
+                    <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
+                        <maxDepthPerThrowable>30</maxDepthPerThrowable>
+                        <maxLength>2048</maxLength>
+                        <shortenedClassNameLength>20</shortenedClassNameLength>
+                        <rootCauseFirst>true</rootCauseFirst>
+                    </throwableConverter>
+                </stackTrace>
+
+                <!-- Custom fields -->
+                <arguments>
+                    <fieldName>args</fieldName>
+                </arguments>
+
+                <!-- Application info -->
+                <pattern>
+                    <pattern>
+                        {
+                        "app_name": "${APP_NAME}",
+                        "environment": "${SPRING_PROFILES_ACTIVE:-default}"
+                        }
+                    </pattern>
+                </pattern>
+            </providers>
+        </encoder>
+    </appender>
+
+    <!-- Console Appender with human-readable format (for development) -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} [%X{traceId:-},%X{spanId:-}] - %msg%n
+            </pattern>
+        </encoder>
+    </appender>
+
+    <!-- File Appender for persistent logs -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/specpulse.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>logs/specpulse.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>3GB</totalSizeCap>
+        </rollingPolicy>
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <timestamp>
+                    <timeZone>UTC</timeZone>
+                </timestamp>
+                <logLevel/>
+                <loggerName/>
+                <message/>
+                <mdc/>
+                <stackTrace>
+                    <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
+                        <maxDepthPerThrowable>30</maxDepthPerThrowable>
+                        <maxLength>2048</maxLength>
+                    </throwableConverter>
+                </stackTrace>
+                <pattern>
+                    <pattern>
+                        {
+                        "app_name": "${APP_NAME}",
+                        "environment": "${SPRING_PROFILES_ACTIVE:-default}"
+                        }
+                    </pattern>
+                </pattern>
+            </providers>
+        </encoder>
+    </appender>
+
+    <!-- Async wrapper for better performance -->
+    <appender name="ASYNC_JSON_CONSOLE" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="JSON_CONSOLE"/>
+        <queueSize>512</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <includeCallerData>false</includeCallerData>
+    </appender>
+
+    <appender name="ASYNC_FILE" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="FILE"/>
+        <queueSize>512</queueSize>
+    </appender>
+
+    <!-- Logger levels -->
+    <logger name="com.specpulse" level="INFO" additivity="false">
+        <appender-ref ref="ASYNC_JSON_CONSOLE"/>
+        <appender-ref ref="ASYNC_FILE"/>
+    </logger>
+
+    <!-- Disable Hibernate SQL logging in production -->
+    <logger name="org.hibernate.SQL" level="WARN" additivity="false"/>
+    <logger name="org.hibernate.type.descriptor.sql.BasicBinder" level="WARN" additivity="false"/>
+    <logger name="org.hibernate.type.descriptor.sql.BasicExtractor" level="WARN" additivity="false"/>
+
+    <logger name="org.springframework.web" level="INFO"/>
+    <logger name="org.hibernate" level="WARN"/>
+    <logger name="com.zaxxer.hikari" level="INFO"/>
+    <logger name="org.flywaydb" level="INFO"/>
+
+    <!-- Root logger -->
+    <root level="INFO">
+        <appender-ref ref="ASYNC_JSON_CONSOLE"/>
+        <appender-ref ref="ASYNC_FILE"/>
+    </root>
+
+</configuration>

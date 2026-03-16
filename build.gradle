@@ -1,0 +1,23 @@
+plugins {
+    id 'base'
+}
+
+// Root project - aggregate tasks
+
+subprojects {
+    // Common configuration can be added here
+}
+
+// Task to build everything
+tasks.register('fullBuild') {
+    dependsOn ':specpulse-backend:build'
+    dependsOn ':specpulse-frontend:npmBuild'
+    description 'Build both backend and frontend'
+    group 'build'
+}
+
+// Task to run both backend and frontend
+tasks.register('runAll') {
+    description 'Run backend and frontend development servers'
+    group 'run'
+}

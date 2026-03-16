@@ -1,0 +1,17 @@
+# Test configuration with Testcontainers
+spring:
+  datasource:
+    driver-class-name: org.testcontainers.jdbc.ContainerDatabaseDriver
+  
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+specpulse:
+  scheduler:
+    enabled: false
+
+logging:
+  level:
+    root: WARN
+    com.specpulse: DEBUG

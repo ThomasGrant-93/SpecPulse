@@ -1,0 +1,4 @@
+rootProject.name = 'specpulse'
+
+include 'specpulse-backend'
+include 'specpulse-frontend'

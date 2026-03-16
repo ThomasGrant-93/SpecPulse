@@ -1,0 +1,10 @@
+# Development profile configuration
+# Enable detailed logging for development
+
+logging:
+  level:
+    root: INFO
+    com.specpulse: DEBUG
+    org.springframework.web: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE

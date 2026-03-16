@@ -1,0 +1,44 @@
+plugins {
+    id 'base'
+}
+
+// Frontend build tasks using Node.js
+
+def frontendDir = file(projectDir)
+def npmExecutable = System.getProperty('os.name').toLowerCase().contains('windows') ? 'npm.cmd' : 'npm'
+
+tasks.register('npmInstall', Exec) {
+    workingDir frontendDir
+    commandLine npmExecutable, 'install'
+}
+
+tasks.register('npmBuild', Exec) {
+    dependsOn npmInstall
+    workingDir frontendDir
+    commandLine npmExecutable, 'run', 'build'
+}
+
+tasks.register('npmTest', Exec) {
+    workingDir frontendDir
+    commandLine npmExecutable, 'run', 'test'
+}
+
+tasks.register('npmStart', Exec) {
+    workingDir frontendDir
+    commandLine npmExecutable, 'run', 'dev'
+}
+
+// Assemble task builds frontend
+tasks.named('assemble') {
+    dependsOn npmBuild
+}
+
+// Clean task
+tasks.register('npmClean', Exec) {
+    workingDir frontendDir
+    commandLine npmExecutable, 'run', 'clean'
+}
+
+tasks.named('clean') {
+    dependsOn npmClean
+}

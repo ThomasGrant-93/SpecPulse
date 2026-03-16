@@ -1,0 +1,33 @@
+# Git
+.git
+.gitignore
+
+# Gradle
+.gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Frontend (built separately)
+specpulse-frontend/node_modules/
+specpulse-frontend/dist/
+
+# Logs
+*.log
+logs/
+
+# Local config
+application-local.yml
+application-local.properties
+*.env
