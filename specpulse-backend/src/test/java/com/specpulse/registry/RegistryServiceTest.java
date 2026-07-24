@@ -2,7 +2,6 @@ package com.specpulse.registry;
 
 import com.specpulse.exception.DuplicateResourceException;
 import com.specpulse.exception.ResourceNotFoundException;
-import com.specpulse.group.ServiceGroupRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,22 +22,22 @@ import static org.mockito.Mockito.verify;
 class RegistryServiceTest {
 
     @Mock
-    private ServiceSearchRepository repository;
+    private RegistryRepositoryPort repository;
 
     @Mock
     private com.specpulse.version.VersionService versionService;
 
     @Mock
-    private com.specpulse.client.OpenApiClient openApiClient;
+    private com.specpulse.client.OpenApiSpecPort openApiClient;
 
     @Mock
-    private ServiceGroupRepository groupRepository;
+    private ServiceGroupLookupPort groupLookupPort;
 
     private RegistryService registryService;
 
     @BeforeEach
     void setUp() {
-        registryService = new RegistryService(repository, versionService, openApiClient, groupRepository);
+        registryService = new RegistryService(repository, versionService, openApiClient, groupLookupPort);
     }
 
     @Test
@@ -120,7 +119,8 @@ class RegistryServiceTest {
                 "https://api.updated.com/openapi.json",
                 "Updated description",
                 false,
-                null
+                null,
+                false
         );
 
         var existingEntity = new ServiceEntity("old-name", "https://old.com/openapi.json", "Old desc");
@@ -144,7 +144,7 @@ class RegistryServiceTest {
     void shouldThrowExceptionWhenUpdatingNonExistent() {
         // Given
         Long serviceId = 999L;
-        var request = new RegistryService.UpdateServiceRequest("name", "https://url.com", "desc", true, null);
+        var request = new RegistryService.UpdateServiceRequest("name", "https://url.com", "desc", true, null, false);
 
         given(repository.findById(serviceId)).willReturn(Optional.empty());
 

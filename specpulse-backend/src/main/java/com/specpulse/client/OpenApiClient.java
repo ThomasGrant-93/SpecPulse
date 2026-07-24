@@ -6,6 +6,10 @@ import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.apache.hc.core5.util.Timeout;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -15,9 +19,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Component
-public class OpenApiClient {
+public class OpenApiClient implements OpenApiSpecPort {
 
     private static final Logger log = LoggerFactory.getLogger(OpenApiClient.class);
+    private static final ObjectMapper JSON_MAPPER = new ObjectMapper();
+    private static final ObjectMapper YAML_MAPPER = new ObjectMapper(new YAMLFactory());
 
     private final RequestConfig requestConfig;
 
@@ -29,6 +35,7 @@ public class OpenApiClient {
                 .build();
     }
 
+    @Override
     public SpecFetchResult fetchSpec(String url) {
         log.debug("Fetching OpenAPI spec from: {}", url);
         long startTime = System.currentTimeMillis();
@@ -66,12 +73,13 @@ public class OpenApiClient {
     }
 
     /**
-     * Validate OpenAPI spec URL and content
+     * Validate OpenAPI spec URL and content.
      *
-     * @param url the URL to validate
-     * @return ValidationResult with success status and any errors
+     * @param url the URL to validate.
+     * @return ValidationResult with success status and any errors.
      */
-    public ValidationResult validateOpenApiSpec(String url) {
+    @Override
+    public OpenApiValidationResult validateOpenApiSpec(String url) {
         log.info("Validating OpenAPI spec from: {}", url);
         List<String> errors = new ArrayList<>();
 
@@ -79,32 +87,32 @@ public class OpenApiClient {
 
         if (!result.success()) {
             errors.add("Failed to fetch spec: " + result.errorMessage());
-            return new ValidationResult(false, errors);
+            return new OpenApiValidationResult(false, errors);
         }
 
         // Check if content is valid JSON
         String content = result.content();
         if (content == null || content.trim().isEmpty()) {
             errors.add("Empty response from URL");
-            return new ValidationResult(false, errors);
+            return new OpenApiValidationResult(false, errors);
         }
 
-        // Try to parse as JSON to validate format
+        // Try to parse as JSON or YAML to validate format
         try {
-            com.fasterxml.jackson.databind.JsonNode jsonNode =
-                    new com.fasterxml.jackson.databind.ObjectMapper().readTree(content);
+            JsonNode jsonNode = parseSpecTree(content);
 
             // Check if this is Swagger 2.0 (not supported)
             if (jsonNode.has("swagger") && !jsonNode.has("openapi")) {
-                errors.add("Swagger 2.0 specifications are not supported. Please convert your specification to OpenAPI 3.0 or later. " +
-                        "You can use online converters like https://editor.swagger.io/ to convert Swagger 2.0 to OpenAPI 3.0.");
-                return new ValidationResult(false, errors);
+                errors.add("Swagger 2.0 specifications are not supported. Please convert your specification to OpenAPI 3.0 "
+                        + "or later. You can use online converters like https://editor.swagger.io/ to convert Swagger 2.0 "
+                        + "to OpenAPI 3.0.");
+                return new OpenApiValidationResult(false, errors);
             }
 
             // Check for required OpenAPI 3.x fields
             if (!jsonNode.has("openapi")) {
-                errors.add("Missing required field: 'openapi'. This doesn't appear to be a valid OpenAPI specification. " +
-                        "Note: Swagger 2.0 is not supported. Please use OpenAPI 3.0 or later.");
+                errors.add("Missing required field: 'openapi'. This doesn't appear to be a valid OpenAPI specification. "
+                        + "Note: Swagger 2.0 is not supported. Please use OpenAPI 3.0 or later.");
             }
 
             if (!jsonNode.has("info")) {
@@ -125,16 +133,19 @@ public class OpenApiClient {
                 errors.add("Invalid field: 'paths' must be an object.");
             }
 
-        } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
-            errors.add("Invalid JSON format: " + e.getOriginalMessage());
+        } catch (JsonProcessingException e) {
+            errors.add("Invalid OpenAPI format (expected JSON or YAML): " + e.getOriginalMessage());
         }
 
-        return new ValidationResult(errors.isEmpty(), errors);
+        return new OpenApiValidationResult(errors.isEmpty(), errors);
     }
 
-    public record ValidationResult(
-            boolean success,
-            List<String> errors
-    ) {
+    private JsonNode parseSpecTree(String content) throws JsonProcessingException {
+        try {
+            return JSON_MAPPER.readTree(content);
+        } catch (JsonProcessingException ignored) {
+            return YAML_MAPPER.readTree(content);
+        }
     }
+
 }

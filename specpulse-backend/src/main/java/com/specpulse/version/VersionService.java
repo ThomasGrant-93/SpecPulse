@@ -1,6 +1,8 @@
 package com.specpulse.version;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.specpulse.parser.OpenApiParser;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,7 +16,9 @@ import java.util.Optional;
 @Slf4j
 @RequiredArgsConstructor
 @Service
-public class VersionService {
+public class VersionService implements SpecVersionPullPort {
+
+    private static final ObjectMapper YAML_MAPPER = new ObjectMapper(new YAMLFactory());
 
     private final SpecVersionRepository repository;
     private final OpenApiParser parser;
@@ -39,12 +43,13 @@ public class VersionService {
     }
 
     /**
-     * Pull OpenAPI spec from service and save if changed
+     * Pull OpenAPI spec from service and save if changed.
      *
-     * @return PullResult with information about changes
+     * @return PullResult with information about changes.
      */
     @Transactional
-    public PullResult pullAndSaveVersion(Long serviceId, String serviceName, String specContent) {
+    @Override
+    public SpecVersionPullResult pullAndSaveVersion(Long serviceId, String serviceName, String specContent) {
         OpenApiParser.ParseResult parseResult = parser.parse(specContent);
 
         if (!parseResult.success()) {
@@ -59,7 +64,7 @@ public class VersionService {
         // Check if version with same hash already exists
         if (latestVersion.isPresent() && latestVersion.get().getVersionHash().equals(newHash)) {
             log.info("No changes detected for service {} (hash: {})", serviceName, newHash);
-            return PullResult.unchanged(latestVersion.get().getId(), newHash);
+            return SpecVersionPullResult.unchanged(latestVersion.get().getId(), newHash);
         }
 
         // Create a minimal service entity reference for saving
@@ -70,11 +75,11 @@ public class VersionService {
         entity.setService(serviceRef);
         entity.setVersionHash(newHash);
 
-        // Parse JSON content to JsonNode for JSONB storage
+        // Parse content to JsonNode for JSONB storage (JSON or YAML)
         try {
-            entity.setSpecContent(objectMapper.readTree(specContent));
+            entity.setSpecContent(parseSpecContent(specContent));
         } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
-            throw new IllegalArgumentException("Invalid JSON content: " + e.getMessage(), e);
+            throw new IllegalArgumentException("Invalid OpenAPI content format. Expected valid JSON or YAML.", e);
         }
 
         entity.setSpecVersion(parseResult.specVersion());
@@ -85,7 +90,11 @@ public class VersionService {
         SpecVersionEntity saved = repository.save(entity);
         log.info("Saved new version {} for service {} (hash: {})", saved.getId(), serviceName, newHash);
 
-        return PullResult.newVersion(saved.getId(), newHash, latestVersion.map(SpecVersionEntity::getId));
+        return SpecVersionPullResult.newVersion(
+                saved.getId(),
+                newHash,
+                latestVersion.map(SpecVersionEntity::getId).orElse(null)
+        );
     }
 
     @Transactional(readOnly = true)
@@ -110,18 +119,11 @@ public class VersionService {
                 .orElseThrow(() -> new RuntimeException("Spec version not found with id: " + id));
     }
 
-    public record PullResult(
-            boolean hasChanges,
-            Long newVersionId,
-            Long previousVersionId,
-            String versionHash
-    ) {
-        public static PullResult unchanged(Long versionId, String hash) {
-            return new PullResult(false, versionId, null, hash);
-        }
-
-        public static PullResult newVersion(Long newVersionId, String hash, Optional<Long> previousVersionId) {
-            return new PullResult(true, newVersionId, previousVersionId.orElse(null), hash);
+    private JsonNode parseSpecContent(String specContent) throws com.fasterxml.jackson.core.JsonProcessingException {
+        try {
+            return objectMapper.readTree(specContent);
+        } catch (com.fasterxml.jackson.core.JsonProcessingException ignored) {
+            return YAML_MAPPER.readTree(specContent);
         }
     }
 }

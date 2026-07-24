@@ -1,10 +1,15 @@
 package com.specpulse.api;
 
 import com.specpulse.history.AuditLogDTO;
-import com.specpulse.history.AuditService;
+import com.specpulse.history.AuditEventType;
+import com.specpulse.history.AuditReadPort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Instant;
 import java.util.List;
@@ -13,9 +18,9 @@ import java.util.List;
 @RequestMapping("/api/v1/audit")
 public class AuditController {
 
-    private final AuditService auditService;
+    private final AuditReadPort auditService;
 
-    public AuditController(AuditService auditService) {
+    public AuditController(AuditReadPort auditService) {
         this.auditService = auditService;
     }
 
@@ -26,7 +31,7 @@ public class AuditController {
 
     @GetMapping("/event-type/{eventType}")
     public ResponseEntity<List<AuditLogDTO>> getAuditLogsByEventType(@PathVariable String eventType) {
-        AuditService.EventType type = AuditService.EventType.valueOf(eventType);
+        AuditEventType type = AuditEventType.valueOf(eventType);
         return ResponseEntity.ok(auditService.getAuditLogsByEventType(type));
     }
 

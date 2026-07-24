@@ -14,7 +14,7 @@ import java.util.List;
 
 @Service
 @Transactional(readOnly = true)
-public class DiffService {
+public class DiffService implements SpecDiffPort {
 
     private static final Logger log = LoggerFactory.getLogger(DiffService.class);
 
@@ -87,6 +87,12 @@ public class DiffService {
         }
 
         return saved;
+    }
+
+    @Override
+    @Transactional
+    public void analyzeAndStore(Long serviceId, Long fromVersionId, Long toVersionId) {
+        compareAndStore(serviceId, fromVersionId, toVersionId);
     }
 
     public List<SpecDiffDTO> getDiffsByServiceId(Long serviceId) {

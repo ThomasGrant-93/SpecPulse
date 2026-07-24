@@ -1,12 +1,14 @@
 package com.specpulse.scheduler;
 
-import com.specpulse.client.OpenApiClient;
+import com.specpulse.client.OpenApiSpecPort;
 import com.specpulse.client.SpecFetchResult;
-import com.specpulse.diff.DiffService;
-import com.specpulse.history.AuditService;
+import com.specpulse.diff.SpecDiffPort;
+import com.specpulse.history.AuditEventType;
+import com.specpulse.history.AuditLogPort;
 import com.specpulse.registry.RegistryService;
 import com.specpulse.registry.ServiceDTO;
-import com.specpulse.version.VersionService;
+import com.specpulse.version.SpecVersionPullPort;
+import com.specpulse.version.SpecVersionPullResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -26,24 +28,24 @@ public class SpecPullScheduler {
     private static final Logger log = LoggerFactory.getLogger(SpecPullScheduler.class);
 
     private final RegistryService registryService;
-    private final OpenApiClient openApiClient;
-    private final VersionService versionService;
-    private final DiffService diffService;
-    private final PullExecutionRepository executionRepository;
-    private final AuditService auditService;
+    private final OpenApiSpecPort openApiClient;
+    private final SpecVersionPullPort versionPullPort;
+    private final SpecDiffPort diffPort;
+    private final PullExecutionStorePort executionStore;
+    private final AuditLogPort auditLogPort;
 
     public SpecPullScheduler(RegistryService registryService,
-                             OpenApiClient openApiClient,
-                             VersionService versionService,
-                             DiffService diffService,
-                             PullExecutionRepository executionRepository,
-                             AuditService auditService) {
+                             OpenApiSpecPort openApiClient,
+                             SpecVersionPullPort versionPullPort,
+                             SpecDiffPort diffPort,
+                             PullExecutionStorePort executionStore,
+                             AuditLogPort auditLogPort) {
         this.registryService = registryService;
         this.openApiClient = openApiClient;
-        this.versionService = versionService;
-        this.diffService = diffService;
-        this.executionRepository = executionRepository;
-        this.auditService = auditService;
+        this.versionPullPort = versionPullPort;
+        this.diffPort = diffPort;
+        this.executionStore = executionStore;
+        this.auditLogPort = auditLogPort;
     }
 
     /**
@@ -128,9 +130,9 @@ public class SpecPullScheduler {
             if (!result.success()) {
                 execution.setStatus("FAILED");
                 execution.setErrorMessage(result.errorMessage());
-                executionRepository.save(execution);
+                executionStore.save(execution);
 
-                auditService.logEvent(service.id(), AuditService.EventType.SPEC_FETCH_FAILED,
+                auditLogPort.logEvent(service.id(), AuditEventType.SPEC_FETCH_FAILED,
                         "Failed to fetch spec: " + result.errorMessage());
 
                 log.warn("Failed to pull spec for service: id={}, name={}, error={}",
@@ -139,17 +141,17 @@ public class SpecPullScheduler {
             }
 
             // Parse and save version (with hash comparison inside)
-            VersionService.PullResult pullResult;
+            SpecVersionPullResult pullResult;
             try {
-                pullResult = versionService.pullAndSaveVersion(
+                pullResult = versionPullPort.pullAndSaveVersion(
                         service.id(), service.name(), result.content());
             } catch (IllegalArgumentException e) {
                 // Invalid OpenAPI spec
                 execution.setStatus("FAILED");
                 execution.setErrorMessage(e.getMessage());
-                executionRepository.save(execution);
+                executionStore.save(execution);
 
-                auditService.logEvent(service.id(), AuditService.EventType.SPEC_FETCH_FAILED,
+                auditLogPort.logEvent(service.id(), AuditEventType.SPEC_FETCH_FAILED,
                         "Invalid OpenAPI spec: " + e.getMessage());
 
                 log.error("Invalid OpenAPI spec for service: id={}, name={}, error={}",
@@ -159,27 +161,27 @@ public class SpecPullScheduler {
 
             execution.setStatus("SUCCESS");
             execution.setNewVersionCreated(pullResult.hasChanges());
-            executionRepository.save(execution);
+            executionStore.save(execution);
 
             if (pullResult.hasChanges()) {
                 log.info("New version detected for service: id={}, name={}, versionId={}, hash={}",
                         service.id(), service.name(), pullResult.newVersionId(), pullResult.versionHash());
 
-                auditService.logEvent(service.id(), pullResult.newVersionId(),
-                        AuditService.EventType.SPEC_VERSION_CREATED,
+                auditLogPort.logEvent(service.id(), pullResult.newVersionId(),
+                        AuditEventType.SPEC_VERSION_CREATED,
                         "New version created with hash: " + pullResult.versionHash());
 
                 // Compare with previous version if exists
                 if (pullResult.previousVersionId() != null) {
                     try {
-                        diffService.compareAndStore(
+                        diffPort.analyzeAndStore(
                                 service.id(),
                                 pullResult.previousVersionId(),
                                 pullResult.newVersionId()
                         );
 
-                        auditService.logEvent(service.id(), pullResult.newVersionId(),
-                                AuditService.EventType.DIFF_ANALYZED,
+                        auditLogPort.logEvent(service.id(), pullResult.newVersionId(),
+                                AuditEventType.DIFF_ANALYZED,
                                 "Diff analyzed between versions " + pullResult.previousVersionId() +
                                         " and " + pullResult.newVersionId());
                     } catch (RuntimeException e) {
@@ -191,8 +193,8 @@ public class SpecPullScheduler {
                 log.info("No changes for service: id={}, name={}, hash={}",
                         service.id(), service.name(), pullResult.versionHash());
 
-                auditService.logEvent(service.id(), pullResult.newVersionId(),
-                        AuditService.EventType.SPEC_VERSION_SKIPPED,
+                auditLogPort.logEvent(service.id(), pullResult.newVersionId(),
+                        AuditEventType.SPEC_VERSION_SKIPPED,
                         "Spec unchanged, hash: " + pullResult.versionHash());
             }
 
@@ -202,9 +204,9 @@ public class SpecPullScheduler {
         } catch (RuntimeException e) {
             execution.setStatus("ERROR");
             execution.setErrorMessage(e.getMessage());
-            executionRepository.save(execution);
+            executionStore.save(execution);
 
-            auditService.logEvent(service.id(), AuditService.EventType.SPEC_FETCH_FAILED,
+            auditLogPort.logEvent(service.id(), AuditEventType.SPEC_FETCH_FAILED,
                     "Error pulling spec: " + e.getMessage());
 
             log.error("Error pulling spec for service: id={}, name={}, error={}",
