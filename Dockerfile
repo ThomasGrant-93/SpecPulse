@@ -20,7 +20,7 @@ RUN mkdir -p specpulse-backend/src/main/resources/static
 RUN chmod +x gradlew
 
 # Download dependencies (cached layer for faster rebuilds)
-RUN ./gradlew :specpulse-backend:dependencies --no-daemon || true
+RUN ./gradlew :specpulse-backend:dependencies --no-daemon
 
 # Copy backend source code
 COPY specpulse-backend/src specpulse-backend/src
@@ -60,6 +60,19 @@ COPY --from=frontend-builder /app/dist specpulse-backend/src/main/resources/stat
 # Rebuild JAR with static files
 RUN ./gradlew :specpulse-backend:bootJar --no-daemon
 
+# Resolve and normalize the runnable JAR path for runtime stage
+RUN set -eu; \
+    BOOT_JAR=""; \
+    BOOT_JAR_COUNT=0; \
+    for candidate in specpulse-backend/build/libs/*.jar; do \
+      case "$candidate" in \
+        *-plain.jar) ;; \
+        *) BOOT_JAR="$candidate"; BOOT_JAR_COUNT=$((BOOT_JAR_COUNT + 1)) ;; \
+      esac; \
+    done; \
+    test "$BOOT_JAR_COUNT" -eq 1; \
+    cp "$BOOT_JAR" /app/app.jar
+
 # ===========================================
 # Stage 4: Runtime (JRE only)
 # ===========================================
@@ -72,7 +85,7 @@ RUN addgroup -g 1001 appgroup && \
     adduser -u 1001 -G appgroup -D appuser
 
 # Copy backend JAR from final builder
-COPY --from=backend-final /app/specpulse-backend/build/libs/*.jar app.jar
+COPY --from=backend-final /app/app.jar app.jar
 
 # Set ownership
 RUN chown -R appuser:appgroup /app
