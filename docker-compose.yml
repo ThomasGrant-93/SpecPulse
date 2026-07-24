@@ -36,8 +36,8 @@ services:
         condition: service_healthy
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/specpulse
-      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME:specpulse}
-      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME:-specpulse}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:-specpulse}
       SPRING_PROFILES_ACTIVE: docker
       JAVA_OPTS: "-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0"
       LOGGING_LEVEL_ROOT: INFO
