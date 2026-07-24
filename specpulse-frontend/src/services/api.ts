@@ -142,7 +142,7 @@ export const settingsApi = {
     update: (category: string, key: string, value: SettingValue) =>
         api.put<ApplicationSetting>(`/settings/${category}/${key}`, {value}),
     updateBulk: (updates: Record<string, SettingValue>) =>
-        api.post<ApplicationSetting[]>('/settings', updates),
+        api.patch<ApplicationSetting[]>('/settings', updates),
     getCategories: () => api.get<string[]>('/settings/categories'),
 };
 

@@ -46,16 +46,20 @@ const ServiceList = memo(function ServiceList({
                                     <input
                                             type="checkbox"
                                             className="absolute left-4 top-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                            checked={services.length > 0 && services.every((s) => selectedServiceIds.includes(s.id))}
-                                            onChange={(e) => {
-                                                if (e.target.checked) {
-                                                    services.forEach((s) => onToggleSelectService(s.id));
-                                                } else {
-                                                    services.forEach((s) => onToggleSelectService(s.id));
-                                                }
-                                            }}
-                                            aria-label="Select all services"
-                                    />
+                                             checked={services.length > 0 && services.every((s) => selectedServiceIds.includes(s.id))}
+                                             onChange={(e) => {
+                                                 if (e.target.checked) {
+                                                    services
+                                                        .filter((s) => !selectedServiceIds.includes(s.id))
+                                                        .forEach((s) => onToggleSelectService(s.id));
+                                                 } else {
+                                                    services
+                                                        .filter((s) => selectedServiceIds.includes(s.id))
+                                                        .forEach((s) => onToggleSelectService(s.id));
+                                                 }
+                                             }}
+                                             aria-label="Select all services"
+                                     />
                             )}
                         </th>
                         <th

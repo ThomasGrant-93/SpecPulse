@@ -279,6 +279,14 @@ public class ServiceGroupService {
         }
 
         memberRepository.deleteByGroupIdAndServiceId(groupId, serviceId);
+
+        serviceRepository.findById(serviceId).ifPresent(service -> {
+            if (service.getGroup() != null && service.getGroup().getId().equals(groupId)) {
+                service.setGroup(null);
+                serviceRepository.save(service);
+            }
+        });
+
         log.info("Removed service {} from group {}", serviceId, groupId);
     }
 
