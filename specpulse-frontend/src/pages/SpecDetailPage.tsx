@@ -2,7 +2,7 @@ import {useParams, useSearchParams} from 'react-router-dom';
 import {useQuery} from '@tanstack/react-query';
 import {registryApi, versionsApi} from '@/services/api';
 import ApiSpecViewer from '@/components/ApiSpecViewer';
-import type {OpenAPISpec} from '@/types/openapi';
+import type {AnySpec} from '@/types/openapi';
 import {useState} from 'react';
 
 export default function SpecDetailPage() {
@@ -44,21 +44,74 @@ export default function SpecDetailPage() {
     });
 
     // Parse the spec content - with JSONB it's already parsed
-    const spec: OpenAPISpec | null = specData?.specContent
+    const spec: AnySpec | null = specData?.specContent
             ? typeof specData.specContent === 'string'
-                    ? JSON.parse(specData.specContent)
-                    : specData.specContent
+                    ? (JSON.parse(specData.specContent) as AnySpec)
+                    : (specData.specContent as AnySpec)
             : null;
 
-    // Determine base URL: custom or derived from spec URL
-    const baseUrl =
-            customBaseUrl ||
-            (service?.openApiUrl
-                    ? service.openApiUrl
-                            .replace(/\/openapi\.json$/, '')
-                            .replace(/\/swagger\.json$/, '')
-                            .replace(/\/api\/docs\/json$/, '')
-                    : '');
+    const autoBaseUrl = (() => {
+        if (!spec || !service?.openApiUrl) {
+            return '';
+        }
+
+        // Swagger 2.0: host + schemes + basePath
+        if ('swagger' in spec) {
+            const swagger = spec as any;
+            const scheme = swagger.schemes?.[0] || (() => {
+                try {
+                    return new URL(service.openApiUrl).protocol.replace(':', '');
+                } catch {
+                    return 'http';
+                }
+            })();
+
+            const host = swagger.host || (() => {
+                try {
+                    return new URL(service.openApiUrl).host;
+                } catch {
+                    return '';
+                }
+            })();
+
+            const basePath = swagger.basePath || '';
+            const basePathNormalized = basePath === '/' ? '' : basePath.startsWith('/') ? basePath : basePath ? `/${basePath}` : '';
+            const computed = host ? `${scheme}://${host}${basePathNormalized}` : '';
+            return computed;
+        }
+
+        // OpenAPI 3.x: use servers if present, otherwise trim the spec URL.
+        const v3 = spec as any;
+        const serverUrl = v3.servers?.[0]?.url;
+        if (typeof serverUrl === 'string' && serverUrl.trim() !== '') {
+            return serverUrl;
+        }
+
+        return service.openApiUrl
+                .replace(/\/openapi\.json$/, '')
+                .replace(/\/swagger\.json$/, '')
+                .replace(/\/api\/docs\/json$/, '');
+    })();
+
+    // Many specs use paths like `/live`, while the OpenAPI URL may be hosted under `/api/*/openapi.json`.
+    // Stripping a trailing `/api` avoids producing `/api/api/...` in Try-it-out requests.
+    const autoBaseUrlNormalized = (() => {
+        try {
+            const u = new URL(autoBaseUrl);
+            if (u.pathname.endsWith('/api/')) {
+                u.pathname = u.pathname.slice(0, -4);
+            } else if (u.pathname.endsWith('/api')) {
+                u.pathname = u.pathname.slice(0, -4);
+            }
+            // Avoid output like `https://host` => pathname '/' is ok, but `URL.toString()` already keeps it.
+            return u.toString().replace(/\/$/, '');
+        } catch {
+            return autoBaseUrl.endsWith('/api/') ? autoBaseUrl.slice(0, -4) : autoBaseUrl.endsWith('/api') ? autoBaseUrl.slice(0, -4) : autoBaseUrl;
+        }
+    })();
+
+    // Determine base URL: custom override or auto-detected.
+    const baseUrl = customBaseUrl || autoBaseUrlNormalized;
 
     if (!service) {
         return <div className="text-center py-12">Loading...</div>;

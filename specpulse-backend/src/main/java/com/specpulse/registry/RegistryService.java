@@ -1,6 +1,7 @@
 package com.specpulse.registry;
 
 import com.specpulse.client.OpenApiSpecPort;
+import com.specpulse.client.OutboundUrlSecurity;
 import com.specpulse.exception.DuplicateResourceException;
 import com.specpulse.exception.ResourceNotFoundException;
 import com.specpulse.version.VersionService;
@@ -22,6 +23,7 @@ public class RegistryService {
     private final VersionService versionService;
     private final OpenApiSpecPort openApiClient;
     private final ServiceGroupLookupPort groupLookupPort;
+    private final OutboundUrlSecurity outboundUrlSecurity;
 
     @Transactional(readOnly = true)
     public List<ServiceDTO> getAllServices() {
@@ -67,11 +69,8 @@ public class RegistryService {
             throw new DuplicateResourceException("Service with name '" + request.name() + "' already exists");
         }
 
-        // Validate OpenAPI URL format
-        if (request.openApiUrl() == null || !request.openApiUrl().matches("^https?://.+$")) {
-            log.warn("Service creation failed - invalid URL format: {}", request.openApiUrl());
-            throw new IllegalArgumentException("Invalid OpenAPI URL format. Must start with http:// or https://");
-        }
+        // Validate OpenAPI URL (SSRF hardening happens inside outboundUrlSecurity)
+        outboundUrlSecurity.validateOpenApiUrl(request.openApiUrl());
 
         ServiceEntity entity = new ServiceEntity(
                 request.name(),
@@ -114,6 +113,7 @@ public class RegistryService {
             entity.setName(request.name());
         }
         if (request.openApiUrl() != null) {
+            outboundUrlSecurity.validateOpenApiUrl(request.openApiUrl());
             entity.setOpenApiUrl(request.openApiUrl());
         }
         if (request.description() != null) {

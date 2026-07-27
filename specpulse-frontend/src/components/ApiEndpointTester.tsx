@@ -36,8 +36,11 @@ export default function ApiEndpointTester({endpoint, baseUrl}: ApiEndpointTester
         setIsLoading(true);
         setResponse(null);
 
-        // Build the full URL with path parameters
-        let fullUrl = baseUrl + endpoint.path;
+        // Build the full URL with path parameters.
+        // Normalize joining to avoid missing/double slashes.
+        const normalizedBase = baseUrl.replace(/\/$/, '');
+        const normalizedPath = endpoint.path.startsWith('/') ? endpoint.path : `/${endpoint.path}`;
+        let fullUrl = `${normalizedBase}${normalizedPath}`;
         pathParamNames.forEach((paramName) => {
             fullUrl = fullUrl.replace(`{${paramName}}`, pathParams[paramName] || `{${paramName}}`);
         });

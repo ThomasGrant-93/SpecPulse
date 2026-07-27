@@ -5,6 +5,7 @@ import org.openapitools.openapidiff.core.OpenApiCompare;
 import org.openapitools.openapidiff.core.model.ChangedOpenApi;
 import org.openapitools.openapidiff.core.model.DiffResult;
 import org.openapitools.openapidiff.core.output.ConsoleRender;
+import org.springframework.beans.factory.annotation.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -21,6 +22,9 @@ public class DiffService implements SpecDiffPort {
     private final SpecDiffRepository repository;
     private final VersionService versionService;
 
+    @Value("${specpulse.outbound.max-spec-bytes:2097152}")
+    private long maxSpecBytes = 2_097_152L;
+
     public DiffService(SpecDiffRepository repository, VersionService versionService) {
         this.repository = repository;
         this.versionService = versionService;
@@ -28,6 +32,15 @@ public class DiffService implements SpecDiffPort {
 
     public DiffResultDTO compare(String oldSpec, String newSpec) {
         log.debug("Comparing two OpenAPI specifications");
+
+        if (oldSpec == null || newSpec == null) {
+            throw new IllegalArgumentException("OpenAPI specs must be provided");
+        }
+
+        // Prevent CPU/memory DoS from very large request payloads.
+        if (oldSpec.length() > maxSpecBytes || newSpec.length() > maxSpecBytes) {
+            throw new IllegalArgumentException("OpenAPI spec is too large");
+        }
 
         ChangedOpenApi changedOpenApi = OpenApiCompare.fromContents(oldSpec, newSpec);
         DiffResult diffResult = changedOpenApi.isChanged();

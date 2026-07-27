@@ -1,9 +1,9 @@
 import {useMemo, useState} from 'react';
-import type {ApiEndpoint, ApiTagGroup, HttpMethod, OpenAPISpec} from '@/types/openapi';
+import type {ApiEndpoint, ApiTagGroup, AnySpec, HttpMethod, ParameterObject, RequestBodyObject} from '@/types/openapi';
 import ApiEndpointTester from './ApiEndpointTester';
 
 interface ApiSpecViewerProps {
-    spec: OpenAPISpec;
+    spec: AnySpec;
     baseUrl: string;
 }
 
@@ -22,12 +22,79 @@ export default function ApiSpecViewer({spec, baseUrl}: ApiSpecViewerProps) {
     const [expandedEndpoints, setExpandedEndpoints] = useState<Set<string>>(new Set());
     const [selectedTag, setSelectedTag] = useState<string | null>(null);
 
+    const paths: Record<string, any> = (spec as any)?.paths || {};
+    const isSwagger2 = typeof (spec as any)?.swagger === 'string';
+
+    const normalizeSwaggerParamToOas3Param = (p: any): ParameterObject | null => {
+        if (!p || typeof p !== 'object') return null;
+        if (!['query', 'header', 'path', 'cookie'].includes(p.in)) return null;
+
+        // Swagger 2.0 non-body parameters use `type/format` directly (no `schema` object).
+        const schema = p.schema && typeof p.schema === 'object'
+                ? p.schema
+                : {
+                    type: p.type,
+                    format: p.format,
+                    example: p.example,
+                };
+
+        return {
+            name: String(p.name),
+            in: p.in,
+            description: p.description,
+            required: p.required,
+            deprecated: p.deprecated,
+            schema,
+            example: p.example,
+            examples: p.examples,
+        } as ParameterObject;
+    };
+
+    const normalizeSwaggerOperationToOas3Endpoint = (path: string, method: HttpMethod, operation: any): ApiEndpoint | null => {
+        if (!operation || typeof operation !== 'object') return null;
+
+        const opTags: string[] | undefined = Array.isArray(operation.tags) ? operation.tags : undefined;
+
+        const opParams: any[] = Array.isArray(operation.parameters) ? operation.parameters : [];
+        const bodyParam = opParams.find((p) => p && p.in === 'body');
+        const parameters = opParams
+                .map(normalizeSwaggerParamToOas3Param)
+                .filter((x): x is ParameterObject => x !== null);
+
+        let requestBody: RequestBodyObject | undefined;
+        if (bodyParam && bodyParam.schema) {
+            // Frontend tester expects an OAS3-like `requestBody` object; we map the swagger body param to a JSON schema.
+            requestBody = {
+                description: bodyParam.description,
+                required: bodyParam.required,
+                content: {
+                    'application/json': {
+                        schema: bodyParam.schema,
+                    },
+                },
+            } as RequestBodyObject;
+        }
+
+        return {
+            path,
+            method,
+            operationId: operation.operationId,
+            summary: operation.summary,
+            description: operation.description,
+            tags: opTags,
+            parameters,
+            requestBody,
+            responses: operation.responses as any,
+            deprecated: operation.deprecated,
+        };
+    };
+
     // Group endpoints by tags
     const groupedEndpoints = useMemo(() => {
         const groups: Map<string, ApiTagGroup> = new Map();
         const untagged: ApiEndpoint[] = [];
 
-        Object.entries(spec.paths).forEach(([path, pathItem]) => {
+        Object.entries(paths).forEach(([path, pathItem]) => {
             const methods: (HttpMethod | 'get' | 'post' | 'put' | 'delete' | 'patch')[] = [
                 'get',
                 'post',
@@ -40,25 +107,30 @@ export default function ApiSpecViewer({spec, baseUrl}: ApiSpecViewerProps) {
             ];
 
             methods.forEach((method) => {
-                const operation = pathItem[method as HttpMethod];
+                const operation = (pathItem as any)?.[method as HttpMethod];
                 if (operation) {
-                    const endpoint: ApiEndpoint = {
-                        path,
-                        method: method as HttpMethod,
-                        operationId: operation.operationId,
-                        summary: operation.summary,
-                        description: operation.description,
-                        tags: operation.tags,
-                        parameters: operation.parameters,
-                        requestBody: operation.requestBody,
-                        responses: operation.responses,
-                        deprecated: operation.deprecated,
-                    };
+                    const endpoint = isSwagger2
+                            ? normalizeSwaggerOperationToOas3Endpoint(path, method as HttpMethod, operation)
+                            : {
+                                path,
+                                method: method as HttpMethod,
+                                operationId: operation.operationId,
+                                summary: operation.summary,
+                                description: operation.description,
+                                tags: operation.tags,
+                                parameters: operation.parameters,
+                                requestBody: operation.requestBody,
+                                responses: operation.responses,
+                                deprecated: operation.deprecated,
+                            };
 
-                    if (operation.tags && operation.tags.length > 0) {
-                        operation.tags.forEach((tag) => {
+                    if (!endpoint) return;
+
+                    const tags = endpoint.tags;
+                    if (tags && tags.length > 0) {
+                        tags.forEach((tag: string) => {
                             if (!groups.has(tag)) {
-                                const tagInfo = spec.tags?.find((t) => t.name === tag);
+                                const tagInfo = (spec as any).tags?.find((t: any) => t.name === tag);
                                 groups.set(tag, {
                                     name: tag,
                                     description: tagInfo?.description,
@@ -80,7 +152,7 @@ export default function ApiSpecViewer({spec, baseUrl}: ApiSpecViewerProps) {
         }
 
         return groups;
-    }, [spec]);
+    }, [paths, isSwagger2, spec]);
 
     const toggleEndpoint = (id: string) => {
         setExpandedEndpoints((prev) => {
@@ -126,15 +198,13 @@ export default function ApiSpecViewer({spec, baseUrl}: ApiSpecViewerProps) {
                                     }`}
                             >
                                 All (
-                                {spec.paths
-                                        ? Object.values(spec.paths).reduce((acc, pathItem) => {
-                                            let count = 0;
-                                            ['get', 'post', 'put', 'delete', 'patch'].forEach((m) => {
-                                                if (pathItem[m as HttpMethod]) count++;
-                                            });
-                                            return acc + count;
-                                        }, 0)
-                                        : 0}
+                                {Object.values(paths).reduce((acc, pathItem) => {
+                                    let count = 0;
+                                    ['get', 'post', 'put', 'delete', 'patch'].forEach((m) => {
+                                        if (pathItem && (pathItem as any)[m as HttpMethod]) count++;
+                                    });
+                                    return acc + count;
+                                }, 0)}
                                 )
                             </button>
                             {tags.map((tag) => (

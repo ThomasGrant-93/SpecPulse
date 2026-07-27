@@ -1,19 +1,23 @@
 package com.specpulse.client;
 
-import org.apache.hc.client5.http.classic.methods.HttpGet;
-import org.apache.hc.client5.http.config.RequestConfig;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
-import org.apache.hc.client5.http.impl.classic.HttpClients;
-import org.apache.hc.core5.http.io.entity.EntityUtils;
-import org.apache.hc.core5.util.Timeout;
+import org.springframework.beans.factory.annotation.Value;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.core5.http.ClassicHttpResponse;
+import org.apache.hc.core5.util.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,16 +31,28 @@ public class OpenApiClient implements OpenApiSpecPort {
 
     private final RequestConfig requestConfig;
 
-    public OpenApiClient() {
+    private final OutboundUrlSecurity outboundUrlSecurity;
+
+    private final long maxSpecBytes;
+
+    public OpenApiClient(
+            OutboundUrlSecurity outboundUrlSecurity,
+            @Value("${specpulse.outbound.max-spec-bytes:2097152}") long maxSpecBytes
+    ) {
+        this.outboundUrlSecurity = outboundUrlSecurity;
+        this.maxSpecBytes = maxSpecBytes;
+
         this.requestConfig = RequestConfig.custom()
                 .setConnectTimeout(Timeout.ofSeconds(10))
                 .setConnectionRequestTimeout(Timeout.ofSeconds(5))
                 .setResponseTimeout(Timeout.ofSeconds(30))
+                .setRedirectsEnabled(false)
                 .build();
     }
 
     @Override
     public SpecFetchResult fetchSpec(String url) {
+        outboundUrlSecurity.validateOpenApiUrl(url);
         log.debug("Fetching OpenAPI spec from: {}", url);
         long startTime = System.currentTimeMillis();
 
@@ -51,17 +67,26 @@ public class OpenApiClient implements OpenApiSpecPort {
                 long duration = System.currentTimeMillis() - startTime;
                 int statusCode = response.getCode();
 
+                if (response.getEntity() == null) {
+                    return SpecFetchResult.failure(statusCode, "Empty response body", duration);
+                }
+
+                String body;
+                try {
+                    body = readBodyWithLimit(response, maxSpecBytes);
+                } catch (IllegalArgumentException e) {
+                    return SpecFetchResult.failure(statusCode, e.getMessage(), duration);
+                }
+
                 if (statusCode >= 200 && statusCode < 300) {
-                    String content = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
+                    String content = body;
                     log.info("Successfully fetched spec from {} (status: {}, size: {} bytes, duration: {}ms)",
                             url, statusCode, content.length(), duration);
                     return SpecFetchResult.success(content, statusCode, duration);
                 } else {
-                    String errorBody = response.getEntity() != null
-                            ? EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8)
-                            : "";
-                    log.warn("Failed to fetch spec from {} (status: {}, error: {})", url, statusCode, errorBody);
-                    return SpecFetchResult.failure(statusCode, errorBody, duration);
+                    log.warn("Failed to fetch spec from {} (status: {}, error body length: {})",
+                            url, statusCode, body != null ? body.length() : 0);
+                    return SpecFetchResult.failure(statusCode, body, duration);
                 }
             });
 
@@ -101,36 +126,51 @@ public class OpenApiClient implements OpenApiSpecPort {
         try {
             JsonNode jsonNode = parseSpecTree(content);
 
-            // Check if this is Swagger 2.0 (not supported)
-            if (jsonNode.has("swagger") && !jsonNode.has("openapi")) {
-                errors.add("Swagger 2.0 specifications are not supported. Please convert your specification to OpenAPI 3.0 "
-                        + "or later. You can use online converters like https://editor.swagger.io/ to convert Swagger 2.0 "
-                        + "to OpenAPI 3.0.");
-                return new OpenApiValidationResult(false, errors);
-            }
+            boolean isSwagger2 = jsonNode.has("swagger") && !jsonNode.has("openapi");
 
-            // Check for required OpenAPI 3.x fields
-            if (!jsonNode.has("openapi")) {
-                errors.add("Missing required field: 'openapi'. This doesn't appear to be a valid OpenAPI specification. "
-                        + "Note: Swagger 2.0 is not supported. Please use OpenAPI 3.0 or later.");
-            }
+            if (isSwagger2) {
+                // Swagger 2.0 required fields (minimal validation): swagger, info.title, info.version, paths
+                if (!jsonNode.has("info")) {
+                    errors.add("Missing required field: 'info'. Swagger spec must contain API metadata.");
+                } else {
+                    com.fasterxml.jackson.databind.JsonNode info = jsonNode.get("info");
+                    if (!info.has("title")) {
+                        errors.add("Missing required field: 'info.title'. API must have a title.");
+                    }
+                    if (!info.has("version")) {
+                        errors.add("Missing required field: 'info.version'. API must have a version.");
+                    }
+                }
 
-            if (!jsonNode.has("info")) {
-                errors.add("Missing required field: 'info'. OpenAPI spec must contain metadata about the API.");
+                if (!jsonNode.has("paths")) {
+                    errors.add("Missing required field: 'paths'. Swagger spec must define API endpoints.");
+                } else if (!jsonNode.get("paths").isObject()) {
+                    errors.add("Invalid field: 'paths' must be an object.");
+                }
+
             } else {
-                com.fasterxml.jackson.databind.JsonNode info = jsonNode.get("info");
-                if (!info.has("title")) {
-                    errors.add("Missing required field: 'info.title'. API must have a title.");
+                // OpenAPI 3.x required fields
+                if (!jsonNode.has("openapi")) {
+                    errors.add("Missing required field: 'openapi'. This doesn't appear to be a valid OpenAPI 3.x or Swagger 2.0 specification.");
                 }
-                if (!info.has("version")) {
-                    errors.add("Missing required field: 'info.version'. API must have a version.");
-                }
-            }
 
-            if (!jsonNode.has("paths")) {
-                errors.add("Missing required field: 'paths'. OpenAPI spec must define API endpoints.");
-            } else if (!jsonNode.get("paths").isObject()) {
-                errors.add("Invalid field: 'paths' must be an object.");
+                if (!jsonNode.has("info")) {
+                    errors.add("Missing required field: 'info'. OpenAPI spec must contain metadata about the API.");
+                } else {
+                    com.fasterxml.jackson.databind.JsonNode info = jsonNode.get("info");
+                    if (!info.has("title")) {
+                        errors.add("Missing required field: 'info.title'. API must have a title.");
+                    }
+                    if (!info.has("version")) {
+                        errors.add("Missing required field: 'info.version'. API must have a version.");
+                    }
+                }
+
+                if (!jsonNode.has("paths")) {
+                    errors.add("Missing required field: 'paths'. OpenAPI spec must define API endpoints.");
+                } else if (!jsonNode.get("paths").isObject()) {
+                    errors.add("Invalid field: 'paths' must be an object.");
+                }
             }
 
         } catch (JsonProcessingException e) {
@@ -145,6 +185,25 @@ public class OpenApiClient implements OpenApiSpecPort {
             return JSON_MAPPER.readTree(content);
         } catch (JsonProcessingException ignored) {
             return YAML_MAPPER.readTree(content);
+        }
+    }
+
+    private String readBodyWithLimit(ClassicHttpResponse response, long maxBytes) throws IOException {
+        try (InputStream is = response.getEntity().getContent()) {
+            byte[] buffer = new byte[8192];
+            long total = 0;
+            java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+
+            int read;
+            while ((read = is.read(buffer)) != -1) {
+                total += read;
+                if (total > maxBytes) {
+                    throw new IllegalArgumentException("OpenAPI spec is too large");
+                }
+                baos.write(buffer, 0, read);
+            }
+
+            return baos.toString(StandardCharsets.UTF_8);
         }
     }
 

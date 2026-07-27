@@ -6,6 +6,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.specpulse.parser.OpenApiParser;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +24,9 @@ public class VersionService implements SpecVersionPullPort {
     private final SpecVersionRepository repository;
     private final OpenApiParser parser;
     private final ObjectMapper objectMapper;
+
+    @Value("${specpulse.outbound.max-spec-bytes:2097152}")
+    private long maxSpecBytes = 2_097_152L;
 
     @Transactional(readOnly = true)
     public List<SpecVersionDTO> getVersionsByServiceId(Long serviceId) {
@@ -50,6 +54,15 @@ public class VersionService implements SpecVersionPullPort {
     @Transactional
     @Override
     public SpecVersionPullResult pullAndSaveVersion(Long serviceId, String serviceName, String specContent) {
+        if (specContent == null || specContent.isBlank()) {
+            throw new IllegalArgumentException("OpenAPI content is empty");
+        }
+
+        // Prevent CPU/memory DoS from very large specs.
+        if (specContent.length() > maxSpecBytes) {
+            throw new IllegalArgumentException("OpenAPI spec is too large");
+        }
+
         OpenApiParser.ParseResult parseResult = parser.parse(specContent);
 
         if (!parseResult.success()) {
@@ -57,6 +70,7 @@ public class VersionService implements SpecVersionPullPort {
         }
 
         String newHash = parseResult.contentHash();
+        String contentToStore = parseResult.content();
 
         // Get latest version to compare hash
         Optional<SpecVersionEntity> latestVersion = repository.findFirstByServiceIdOrderByPulledAtDesc(serviceId);
@@ -77,14 +91,14 @@ public class VersionService implements SpecVersionPullPort {
 
         // Parse content to JsonNode for JSONB storage (JSON or YAML)
         try {
-            entity.setSpecContent(parseSpecContent(specContent));
+            entity.setSpecContent(parseSpecContent(contentToStore));
         } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
             throw new IllegalArgumentException("Invalid OpenAPI content format. Expected valid JSON or YAML.", e);
         }
 
         entity.setSpecVersion(parseResult.specVersion());
         entity.setSpecTitle(parseResult.title());
-        entity.setFileSizeBytes((long) specContent.length());
+        entity.setFileSizeBytes((long) contentToStore.length());
         entity.setPulledAt(Instant.now());
 
         SpecVersionEntity saved = repository.save(entity);

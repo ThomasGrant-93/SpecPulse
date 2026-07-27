@@ -37,21 +37,30 @@ export const apiTester = {
 
         try {
             const response: AxiosResponse = await axios({
-                method: request.method.toLowerCase(),
-                url,
-                headers: request.headers,
-                data: request.body,
+                method: 'post',
+                url: '/api/v1/tests/proxy',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                data: {
+                    url,
+                    method: request.method,
+                    headers: request.headers,
+                    body: request.body,
+                },
                 validateStatus: () => true, // Accept all status codes
             });
 
             const duration = Date.now() - startTime;
+            const proxyResult = response.data as Omit<TestResponse, 'duration'>;
 
             return {
-                status: response.status,
-                statusText: response.statusText,
-                headers: response.headers as Record<string, string>,
-                body: response.data,
+                status: proxyResult.status ?? 0,
+                statusText: proxyResult.statusText ?? '',
+                headers: proxyResult.headers ?? {},
+                body: proxyResult.body,
                 duration,
+                error: proxyResult.error,
             };
         } catch (error) {
             const duration = Date.now() - startTime;
