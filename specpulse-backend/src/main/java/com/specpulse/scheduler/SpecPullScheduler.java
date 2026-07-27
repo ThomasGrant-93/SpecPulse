@@ -7,22 +7,29 @@ import com.specpulse.history.AuditEventType;
 import com.specpulse.history.AuditLogPort;
 import com.specpulse.registry.RegistryService;
 import com.specpulse.registry.ServiceDTO;
+import com.specpulse.settings.ApplicationSettingService;
 import com.specpulse.version.SpecVersionPullPort;
 import com.specpulse.version.SpecVersionPullResult;
+import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.Date;
 import java.util.List;
+
+import org.springframework.scheduling.support.CronExpression;
 
 /**
  * Scheduled service for pulling OpenAPI specifications
  */
 @Service
-@ConditionalOnProperty(name = "specpulse.scheduler.enabled", havingValue = "true", matchIfMissing = true)
 public class SpecPullScheduler {
 
     private static final Logger log = LoggerFactory.getLogger(SpecPullScheduler.class);
@@ -34,12 +41,27 @@ public class SpecPullScheduler {
     private final PullExecutionStorePort executionStore;
     private final AuditLogPort auditLogPort;
 
+    @Autowired(required = false)
+    private TaskScheduler taskScheduler;
+
+    @Autowired(required = false)
+    private ApplicationSettingService settingService;
+
+    @Value("${specpulse.scheduler.pull-interval-seconds:300}")
+    private long defaultPullIntervalSeconds;
+
+    @Value("${specpulse.scheduler.disabled-check-interval-seconds:60}")
+    private long disabledCheckIntervalSeconds;
+
+    private final Object scheduleLock = new Object();
+    private volatile boolean schedulingStarted = false;
+
     public SpecPullScheduler(RegistryService registryService,
-                             OpenApiSpecPort openApiClient,
-                             SpecVersionPullPort versionPullPort,
-                             SpecDiffPort diffPort,
-                             PullExecutionStorePort executionStore,
-                             AuditLogPort auditLogPort) {
+                              OpenApiSpecPort openApiClient,
+                              SpecVersionPullPort versionPullPort,
+                              SpecDiffPort diffPort,
+                              PullExecutionStorePort executionStore,
+                              AuditLogPort auditLogPort) {
         this.registryService = registryService;
         this.openApiClient = openApiClient;
         this.versionPullPort = versionPullPort;
@@ -48,10 +70,26 @@ public class SpecPullScheduler {
         this.auditLogPort = auditLogPort;
     }
 
+    @PostConstruct
+    public void initScheduler() {
+        // Unit tests instantiate this class directly (not Spring-managed), so these may be null.
+        if (taskScheduler == null || settingService == null) {
+            return;
+        }
+
+        synchronized (scheduleLock) {
+            if (schedulingStarted) {
+                return;
+            }
+            schedulingStarted = true;
+        }
+
+        scheduleNextRun();
+    }
+
     /**
-     * Scheduled pull for all enabled services
+     * Executes scheduled pull for all enabled services.
      */
-    @Scheduled(fixedRateString = "${specpulse.scheduler.pull-interval-seconds:300}000")
     public void pullAllEnabledServices() {
         log.info("Starting scheduled pull for all enabled services");
         List<ServiceDTO> services = registryService.getEnabledServices();
@@ -73,6 +111,94 @@ public class SpecPullScheduler {
 
         log.info("Completed scheduled pull: newVersions={}, unchanged={}, failed={}, total={}",
                 newVersionsCount, unchangedCount, failedCount, services.size());
+    }
+
+    private void scheduleNextRun() {
+        boolean schedulerEnabled = isSchedulerPullEnabled();
+
+        if (!schedulerEnabled) {
+            Date next = new Date(System.currentTimeMillis() + disabledCheckIntervalSeconds * 1000L);
+            taskScheduler.schedule(this::runScheduledPullAndReschedule, next);
+            return;
+        }
+
+        String cronExpression = getSchedulerCronExpression();
+        if (cronExpression != null && !cronExpression.isBlank()) {
+            try {
+                CronExpression cron = CronExpression.parse(cronExpression);
+                ZonedDateTime now = ZonedDateTime.now(ZoneId.systemDefault());
+                ZonedDateTime nextTime = cron.next(now);
+                if (nextTime != null) {
+                    Date next = Date.from(nextTime.toInstant());
+                    taskScheduler.schedule(this::runScheduledPullAndReschedule, next);
+                    return;
+                }
+            } catch (Exception e) {
+                log.warn("Invalid cron expression '{}'; falling back to interval scheduling. error={}",
+                        cronExpression, e.getMessage());
+            }
+        }
+
+        long intervalSeconds = getSchedulerPullIntervalSecondsFromDb();
+        if (intervalSeconds <= 0) {
+            intervalSeconds = defaultPullIntervalSeconds;
+        }
+
+        long delayMs = intervalSeconds * 1000L;
+        Date next = new Date(System.currentTimeMillis() + delayMs);
+        taskScheduler.schedule(this::runScheduledPullAndReschedule, next);
+    }
+
+    private void runScheduledPullAndReschedule() {
+        try {
+            if (isSchedulerPullEnabled()) {
+                pullAllEnabledServices();
+            }
+        } finally {
+            scheduleNextRun();
+        }
+    }
+
+    private boolean isSchedulerPullEnabled() {
+        try {
+            // DB keys from V6__Create_application_settings.sql
+            // category: scheduler, key: pull.enabled
+            return Boolean.TRUE.equals(settingService.getSettingValue("scheduler", "pull.enabled", Boolean.class));
+        } catch (Exception e) {
+            return true;
+        }
+    }
+
+    private String getSchedulerCronExpression() {
+        try {
+            // category: scheduler, key: pull.cron_expression
+            return settingService.getSettingValue("scheduler", "pull.cron_expression", String.class);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private long getSchedulerPullIntervalSecondsFromDb() {
+        // Backward/alternate key names.
+        try {
+            Integer v = settingService.getSettingValue("scheduler", "pull_interval_seconds", Integer.class);
+            if (v != null) {
+                return v.longValue();
+            }
+        } catch (Exception ignored) {
+            // ignore
+        }
+
+        try {
+            Integer v = settingService.getSettingValue("scheduler", "pull_interval", Integer.class);
+            if (v != null) {
+                return v.longValue();
+            }
+        } catch (Exception ignored) {
+            // ignore
+        }
+
+        return -1;
     }
 
     /**
