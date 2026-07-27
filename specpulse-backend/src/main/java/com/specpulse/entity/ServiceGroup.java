@@ -54,8 +54,6 @@ public class ServiceGroup {
     @Column(name = "sort_order", nullable = false)
     private Integer sortOrder = 0;
 
-    @OneToMany(mappedBy = "group", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<GroupMember> members = new ArrayList<>();
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -64,22 +62,6 @@ public class ServiceGroup {
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
-
-    /**
-     * Добавить сервис в группу
-     */
-    public void addMember(GroupMember member) {
-        members.add(member);
-        member.setGroup(this);
-    }
-
-    /**
-     * Удалить сервис из группы
-     */
-    public void removeMember(GroupMember member) {
-        members.remove(member);
-        member.setGroup(null);
-    }
 
     /**
      * Получить полный путь группы (например: "production/backend")
