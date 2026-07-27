@@ -20,6 +20,18 @@ out/
 !**/src/test/**/out/
 .idea_modules/
 
+# Eclipse / Buildship
+.project
+.classpath
+.factorypath
+.settings/
+**/.project
+**/.classpath
+**/.factorypath
+**/.settings/
+specpulse-backend/bin/
+specpulse-frontend/bin/
+
 # ===========================
 # OS Files
 # ===========================

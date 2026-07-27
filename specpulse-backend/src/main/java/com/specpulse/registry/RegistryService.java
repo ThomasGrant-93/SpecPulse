@@ -1,9 +1,9 @@
 package com.specpulse.registry;
 
-import com.specpulse.client.OpenApiClient;
+import com.specpulse.client.OpenApiSpecPort;
+import com.specpulse.client.OutboundUrlSecurity;
 import com.specpulse.exception.DuplicateResourceException;
 import com.specpulse.exception.ResourceNotFoundException;
-import com.specpulse.group.ServiceGroupRepository;
 import com.specpulse.version.VersionService;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -19,10 +19,11 @@ import java.util.List;
 @Service
 public class RegistryService {
 
-    private final ServiceSearchRepository repository;
+    private final RegistryRepositoryPort repository;
     private final VersionService versionService;
-    private final OpenApiClient openApiClient;
-    private final ServiceGroupRepository groupRepository;
+    private final OpenApiSpecPort openApiClient;
+    private final ServiceGroupLookupPort groupLookupPort;
+    private final OutboundUrlSecurity outboundUrlSecurity;
 
     @Transactional(readOnly = true)
     public List<ServiceDTO> getAllServices() {
@@ -68,11 +69,8 @@ public class RegistryService {
             throw new DuplicateResourceException("Service with name '" + request.name() + "' already exists");
         }
 
-        // Validate OpenAPI URL format
-        if (request.openApiUrl() == null || !request.openApiUrl().matches("^https?://.+$")) {
-            log.warn("Service creation failed - invalid URL format: {}", request.openApiUrl());
-            throw new IllegalArgumentException("Invalid OpenAPI URL format. Must start with http:// or https://");
-        }
+        // Validate OpenAPI URL (SSRF hardening happens inside outboundUrlSecurity)
+        outboundUrlSecurity.validateOpenApiUrl(request.openApiUrl());
 
         ServiceEntity entity = new ServiceEntity(
                 request.name(),
@@ -83,7 +81,7 @@ public class RegistryService {
 
         // Set group if provided
         if (request.groupId() != null) {
-            groupRepository.findById(request.groupId())
+            groupLookupPort.findById(request.groupId())
                     .ifPresentOrElse(
                             entity::setGroup,
                             () -> log.warn("Group with id {} not found, service will be created without group", request.groupId())
@@ -115,6 +113,7 @@ public class RegistryService {
             entity.setName(request.name());
         }
         if (request.openApiUrl() != null) {
+            outboundUrlSecurity.validateOpenApiUrl(request.openApiUrl());
             entity.setOpenApiUrl(request.openApiUrl());
         }
         if (request.description() != null) {
@@ -124,11 +123,13 @@ public class RegistryService {
             entity.setEnabled(request.enabled());
         }
         if (request.groupId() != null) {
-            groupRepository.findById(request.groupId())
+            groupLookupPort.findById(request.groupId())
                     .ifPresentOrElse(
                             entity::setGroup,
                             () -> log.warn("Group with id {} not found, group assignment skipped", request.groupId())
                     );
+        } else if (Boolean.TRUE.equals(request.clearGroup())) {
+            entity.setGroup(null);
         }
 
         ServiceEntity saved = repository.save(entity);
@@ -183,8 +184,7 @@ public class RegistryService {
     /**
      * Validate service before creation
      */
-    public com.specpulse.api.RegistryController.ValidateResponse validateService(
-            com.specpulse.api.RegistryController.ValidateRequest request) {
+    public ServiceValidationResult validateService(ServiceValidationRequest request) {
         List<String> errors = new java.util.ArrayList<>();
 
         // Check if name already exists
@@ -193,12 +193,12 @@ public class RegistryService {
         }
 
         // Validate OpenAPI URL
-        OpenApiClient.ValidationResult validationResult = openApiClient.validateOpenApiSpec(request.openApiUrl());
+        var validationResult = openApiClient.validateOpenApiSpec(request.openApiUrl());
         if (!validationResult.success()) {
             errors.addAll(validationResult.errors());
         }
 
-        return new com.specpulse.api.RegistryController.ValidateResponse(
+        return new ServiceValidationResult(
                 errors.isEmpty(),
                 errors
         );
@@ -222,7 +222,8 @@ public class RegistryService {
             String openApiUrl,
             String description,
             Boolean enabled,
-            Long groupId
+            Long groupId,
+            Boolean clearGroup
     ) {
     }
 }

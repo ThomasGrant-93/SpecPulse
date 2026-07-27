@@ -2,7 +2,7 @@ package com.specpulse.registry;
 
 import com.specpulse.exception.DuplicateResourceException;
 import com.specpulse.exception.ResourceNotFoundException;
-import com.specpulse.group.ServiceGroupRepository;
+import com.specpulse.client.OutboundUrlSecurity;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,6 +16,8 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
@@ -23,22 +25,26 @@ import static org.mockito.Mockito.verify;
 class RegistryServiceTest {
 
     @Mock
-    private ServiceSearchRepository repository;
+    private RegistryRepositoryPort repository;
 
     @Mock
     private com.specpulse.version.VersionService versionService;
 
     @Mock
-    private com.specpulse.client.OpenApiClient openApiClient;
+    private com.specpulse.client.OpenApiSpecPort openApiClient;
 
     @Mock
-    private ServiceGroupRepository groupRepository;
+    private ServiceGroupLookupPort groupLookupPort;
+
+    @Mock
+    private OutboundUrlSecurity outboundUrlSecurity;
 
     private RegistryService registryService;
 
     @BeforeEach
     void setUp() {
-        registryService = new RegistryService(repository, versionService, openApiClient, groupRepository);
+        lenient().doNothing().when(outboundUrlSecurity).validateOpenApiUrl(any());
+        registryService = new RegistryService(repository, versionService, openApiClient, groupLookupPort, outboundUrlSecurity);
     }
 
     @Test
@@ -104,6 +110,9 @@ class RegistryServiceTest {
 
         given(repository.existsByName(request.name())).willReturn(false);
 
+        org.mockito.Mockito.doThrow(new IllegalArgumentException("Invalid OpenAPI URL format")).when(outboundUrlSecurity)
+                .validateOpenApiUrl(request.openApiUrl());
+
         // When & Then
         assertThatThrownBy(() -> registryService.createService(request))
                 .isInstanceOf(IllegalArgumentException.class)
@@ -120,7 +129,8 @@ class RegistryServiceTest {
                 "https://api.updated.com/openapi.json",
                 "Updated description",
                 false,
-                null
+                null,
+                false
         );
 
         var existingEntity = new ServiceEntity("old-name", "https://old.com/openapi.json", "Old desc");
@@ -144,7 +154,7 @@ class RegistryServiceTest {
     void shouldThrowExceptionWhenUpdatingNonExistent() {
         // Given
         Long serviceId = 999L;
-        var request = new RegistryService.UpdateServiceRequest("name", "https://url.com", "desc", true, null);
+        var request = new RegistryService.UpdateServiceRequest("name", "https://url.com", "desc", true, null, false);
 
         given(repository.findById(serviceId)).willReturn(Optional.empty());
 

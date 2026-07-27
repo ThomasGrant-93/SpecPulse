@@ -10,6 +10,7 @@ export default function VersionList({versions, serviceId}: VersionListProps) {
     const {
         data: paginatedVersions,
         page,
+        pageSize,
         totalPages,
         totalItems,
         nextPage,
@@ -55,7 +56,7 @@ export default function VersionList({versions, serviceId}: VersionListProps) {
                         </thead>
                         <tbody className="divide-y divide-gray-200 bg-white">
                         {paginatedVersions.map((version, index) => {
-                            const globalIndex = (page - 1) * 5 + index;
+                            const globalIndex = (page - 1) * pageSize + index;
                             return (
                                     <tr
                                             key={version.id}
@@ -139,7 +140,7 @@ export default function VersionList({versions, serviceId}: VersionListProps) {
                         <div className="mt-4 flex items-center justify-between">
                             <div className="flex items-center gap-2">
                                 <select
-                                        value={5}
+                                        value={pageSize}
                                         onChange={(e) => setPageSize(Number(e.target.value))}
                                         className="rounded-md border-gray-300 py-1 pl-2 pr-8 text-sm focus:border-blue-500 focus:ring-blue-500"
                                 >

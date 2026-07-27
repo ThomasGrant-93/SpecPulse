@@ -43,7 +43,7 @@ export default function ServicesPage() {
 
     const pagination = usePagination(services, {initialPage: 1, initialPageSize: 10});
     const paginatedServices = pagination.data as typeof services;
-    const {page, totalPages, totalItems, nextPage, previousPage, setPageSize} = pagination;
+    const {page, pageSize, totalPages, totalItems, nextPage, previousPage, setPageSize} = pagination;
 
     const createMutation = useMutation({
         mutationFn: async (data: CreateServiceRequest) => {
@@ -81,6 +81,7 @@ export default function ServicesPage() {
                 description: data.description,
                 enabled: data.enabled,
                 groupId: data.groupId ?? null,
+                clearGroup: data.groupId === null || data.groupId === undefined,
             };
             logger.debug('[ServicesPage] updateMutation sending:', requestData);
             const response = await registryApi.update(id, requestData);
@@ -234,19 +235,19 @@ export default function ServicesPage() {
                     {totalItems > 0 && (
                             <div className="mt-6 flex items-center justify-between border-t border-gray-200 pt-4">
                                 <div className="flex items-center gap-4">
-                                    <p className="text-sm text-gray-700">
-                                        Showing <span className="font-medium">{(page - 1) * 10 + 1}</span>{' '}
-                                        to{' '}
-                                        <span className="font-medium">
-                                    {Math.min(page * 10, totalItems)}
-                                </span>{' '}
-                                        of <span className="font-medium">{totalItems}</span> results
-                                    </p>
-                                    <select
-                                            value={10}
+                                     <p className="text-sm text-gray-700">
+                                        Showing <span className="font-medium">{(page - 1) * pageSize + 1}</span>{' '}
+                                         to{' '}
+                                         <span className="font-medium">
+                                    {Math.min(page * pageSize, totalItems)}
+                                 </span>{' '}
+                                         of <span className="font-medium">{totalItems}</span> results
+                                     </p>
+                                     <select
+                                            value={pageSize}
                                             onChange={(e) => setPageSize(Number(e.target.value))}
                                             className="rounded-md border-gray-300 py-1 pl-2 pr-8 text-sm focus:border-blue-500 focus:ring-blue-500"
-                                    >
+                                     >
                                         <option value={5}>5 / page</option>
                                         <option value={10}>10 / page</option>
                                         <option value={20}>20 / page</option>

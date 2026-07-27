@@ -40,16 +40,16 @@ public interface ServiceGroupRepository extends JpaRepository<ServiceGroup, Long
     /**
      * Получить количество сервисов в группе
      */
-    @Query("SELECT COUNT(m) FROM GroupMember m WHERE m.group.id = :groupId")
+    @Query("SELECT COUNT(s) FROM com.specpulse.registry.ServiceEntity s WHERE s.group.id = :groupId")
     Integer countServicesByGroupId(@Param("groupId") Long groupId);
 
     /**
      * Получить все группы с количеством сервисов
      */
     @Query("""
-                SELECT g, COUNT(m) as serviceCount
+                SELECT g, COUNT(s) as serviceCount
                 FROM ServiceGroup g
-                LEFT JOIN GroupMember m ON m.group = g
+                LEFT JOIN com.specpulse.registry.ServiceEntity s ON s.group = g
                 GROUP BY g
                 ORDER BY g.sortOrder ASC
             """)

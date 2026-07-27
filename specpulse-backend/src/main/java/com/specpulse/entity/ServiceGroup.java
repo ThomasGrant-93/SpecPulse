@@ -1,6 +1,17 @@
 package com.specpulse.entity;
 
-import jakarta.persistence.*;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderBy;
+import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
@@ -43,8 +54,6 @@ public class ServiceGroup {
     @Column(name = "sort_order", nullable = false)
     private Integer sortOrder = 0;
 
-    @OneToMany(mappedBy = "group", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<GroupMember> members = new ArrayList<>();
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -53,22 +62,6 @@ public class ServiceGroup {
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
-
-    /**
-     * Добавить сервис в группу
-     */
-    public void addMember(GroupMember member) {
-        members.add(member);
-        member.setGroup(this);
-    }
-
-    /**
-     * Удалить сервис из группы
-     */
-    public void removeMember(GroupMember member) {
-        members.remove(member);
-        member.setGroup(null);
-    }
 
     /**
      * Получить полный путь группы (например: "production/backend")

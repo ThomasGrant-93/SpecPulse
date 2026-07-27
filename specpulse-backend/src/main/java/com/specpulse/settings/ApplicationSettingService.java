@@ -5,7 +5,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 @Service
@@ -14,7 +20,7 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class ApplicationSettingService {
 
-    private final ApplicationSettingRepository settingRepository;
+    private final ApplicationSettingRepositoryPort settingRepository;
 
     /**
      * Получить все настройки сгруппированные по категориям
@@ -95,32 +101,24 @@ public class ApplicationSettingService {
      * Массовое обновление настроек
      */
     @Transactional
-    public List<ApplicationSettingDTO> updateSettings(Map<String, Object> updates) {
+    public List<ApplicationSettingDTO> updateSettings(List<SettingUpdateCommand> updates) {
         List<ApplicationSettingDTO> results = new ArrayList<>();
         List<String> errors = new ArrayList<>();
 
-        for (Map.Entry<String, Object> entry : updates.entrySet()) {
-            String[] parts = entry.getKey().split("\\.", 2);
-            if (parts.length != 2) {
-                String errorMsg = String.format("Invalid setting key format: %s", entry.getKey());
-                log.error(errorMsg);
-                errors.add(errorMsg);
-                continue;
-            }
-
+        for (SettingUpdateCommand update : updates) {
             try {
-                ApplicationSettingDTO result = updateSetting(parts[0], parts[1], entry.getValue());
+                ApplicationSettingDTO result = updateSetting(update.category(), update.key(), update.value());
                 results.add(result);
             } catch (NoSuchElementException e) {
-                String errorMsg = String.format("Setting not found: %s", entry.getKey());
+                String errorMsg = String.format("Setting not found: %s", update.fullKey());
                 log.error(errorMsg, e);
                 errors.add(errorMsg);
             } catch (IllegalStateException e) {
-                String errorMsg = String.format("Setting not editable: %s", entry.getKey());
+                String errorMsg = String.format("Setting not editable: %s", update.fullKey());
                 log.error(errorMsg, e);
                 errors.add(errorMsg);
             } catch (RuntimeException e) {
-                String errorMsg = String.format("Failed to update setting %s: %s", entry.getKey(), e.getMessage());
+                String errorMsg = String.format("Failed to update setting %s: %s", update.fullKey(), e.getMessage());
                 log.error(errorMsg, e);
                 errors.add(errorMsg);
             }

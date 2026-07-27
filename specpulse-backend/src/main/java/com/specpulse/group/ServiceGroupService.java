@@ -1,6 +1,5 @@
 package com.specpulse.group;
 
-import com.specpulse.entity.GroupMember;
 import com.specpulse.entity.ServiceGroup;
 import com.specpulse.exception.ResourceNotFoundException;
 import com.specpulse.registry.ServiceEntity;
@@ -21,7 +20,6 @@ import java.util.stream.Collectors;
 public class ServiceGroupService {
 
     private final ServiceGroupRepository groupRepository;
-    private final GroupMemberRepository memberRepository;
     private final ServiceRepository serviceRepository;
 
     /**
@@ -72,8 +70,8 @@ public class ServiceGroupService {
         dto.setServiceCount(groupRepository.countServicesByGroupId(id));
 
         if (includeServices) {
-            List<GroupMember> members = memberRepository.findByGroupIdOrderByAddedAtDesc(id);
-            dto.setServices(members.stream()
+            List<ServiceEntity> services = serviceRepository.findByGroupIdOrderByCreatedAtDesc(id);
+            dto.setServices(services.stream()
                     .map(this::toServiceDTO)
                     .collect(Collectors.toList()));
         }
@@ -252,18 +250,11 @@ public class ServiceGroupService {
         }
 
         for (ServiceEntity service : services) {
-            if (!memberRepository.existsByGroupIdAndServiceId(groupId, service.getId())) {
-                GroupMember member = new GroupMember();
-                member.setGroup(group);
-                member.setService(service);
-                memberRepository.save(member);
+            // services.group_id is the single source of truth
+            service.setGroup(group);
+            serviceRepository.save(service);
 
-                // Установить основную группу для сервиса
-                service.setGroup(group);
-                serviceRepository.save(service);
-
-                log.info("Added service {} to group {}", service.getId(), group.getId());
-            }
+            log.info("Added service {} to group {}", service.getId(), group.getId());
         }
 
         return getGroupById(groupId, false);
@@ -274,11 +265,16 @@ public class ServiceGroupService {
      */
     @Transactional
     public void removeServiceFromGroup(Long groupId, Long serviceId) {
-        if (!memberRepository.existsByGroupIdAndServiceId(groupId, serviceId)) {
+        ServiceEntity service = serviceRepository.findById(serviceId)
+                .orElseThrow(() -> new ResourceNotFoundException("Service", serviceId));
+
+        if (service.getGroup() == null || service.getGroup().getId() == null || !service.getGroup().getId().equals(groupId)) {
             throw new ResourceNotFoundException("Service not in group");
         }
 
-        memberRepository.deleteByGroupIdAndServiceId(groupId, serviceId);
+        service.setGroup(null);
+        serviceRepository.save(service);
+
         log.info("Removed service {} from group {}", serviceId, groupId);
     }
 
@@ -286,10 +282,10 @@ public class ServiceGroupService {
      * Получить группы сервиса
      */
     public List<ServiceGroupDTO> getServiceGroups(Long serviceId) {
-        List<ServiceGroup> groups = memberRepository.findGroupsByServiceId(serviceId);
-        return groups.stream()
-                .map(this::toDTO)
-                .collect(Collectors.toList());
+        return serviceRepository.findById(serviceId)
+                .map(ServiceEntity::getGroup)
+                .map(group -> List.of(toDTO(group)))
+                .orElse(List.of());
     }
 
     // ========== Private methods ==========
@@ -331,15 +327,14 @@ public class ServiceGroupService {
         return dto;
     }
 
-    private ServiceGroupDTO.GroupServiceDTO toServiceDTO(GroupMember member) {
-        ServiceEntity service = member.getService();
+    private ServiceGroupDTO.GroupServiceDTO toServiceDTO(ServiceEntity service) {
         return ServiceGroupDTO.GroupServiceDTO.builder()
                 .id(service.getId())
                 .name(service.getName())
                 .openApiUrl(service.getOpenApiUrl())
                 .description(service.getDescription())
                 .enabled(service.isEnabled())
-                .addedAt(member.getAddedAt() != null ? Instant.from(member.getAddedAt()) : null)
+                .addedAt(service.getCreatedAt() != null ? service.getCreatedAt() : null)
                 .build();
     }
 }

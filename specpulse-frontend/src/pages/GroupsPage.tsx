@@ -24,7 +24,7 @@ export default function GroupsPage() {
         queryKey: ['group', selectedGroup?.id],
         queryFn: async () => {
             if (!selectedGroup?.id) return null;
-            const response = await groupsApi.getById(selectedGroup.id, false);
+            const response = await groupsApi.getById(selectedGroup.id, true);
             return response.data;
         },
         enabled: !!selectedGroup?.id,
@@ -207,6 +207,43 @@ export default function GroupsPage() {
                                             </span>
                                                 </div>
                                             </div>
+
+                                            {selectedGroupDetails.services && selectedGroupDetails.services.length > 0 && (
+                                                <div className="pt-4 border-t border-gray-200">
+                                                    <h4 className="text-sm font-semibold text-gray-700 mb-2">Members</h4>
+                                                    <div className="space-y-2">
+                                                        {selectedGroupDetails.services.map((svc) => (
+                                                            <div
+                                                                key={svc.id}
+                                                                className="flex items-center justify-between gap-3 bg-gray-50 rounded px-3 py-2"
+                                                            >
+                                                                <div className="min-w-0">
+                                                                    <div className="font-medium text-gray-900 truncate">
+                                                                        {svc.name}
+                                                                    </div>
+                                                                    {svc.description && (
+                                                                        <div className="text-xs text-gray-600 truncate">
+                                                                            {svc.description}
+                                                                        </div>
+                                                                    )}
+                                                                    <div className="text-[11px] text-gray-500 font-mono truncate">
+                                                                        {svc.openApiUrl}
+                                                                    </div>
+                                                                </div>
+                                                                <div className="flex items-center gap-2 flex-shrink-0">
+                                                                    <span
+                                                                        className={`text-xs px-2 py-0.5 rounded-full ${
+                                                                            svc.enabled ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-700'
+                                                                        }`}
+                                                                    >
+                                                                        {svc.enabled ? 'Enabled' : 'Disabled'}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
 
                                             <div className="pt-4 border-t border-gray-200">
                                                 <div className="flex items-center justify-between">

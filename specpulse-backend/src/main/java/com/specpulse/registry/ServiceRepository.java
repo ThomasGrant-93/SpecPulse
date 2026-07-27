@@ -15,6 +15,8 @@ public interface ServiceRepository extends JpaRepository<ServiceEntity, Long> {
 
     List<ServiceEntity> findByEnabledTrue();
 
+    List<ServiceEntity> findByGroupIdOrderByCreatedAtDesc(Long groupId);
+
     boolean existsByName(String name);
 
     /**

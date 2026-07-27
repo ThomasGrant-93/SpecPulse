@@ -1,8 +1,11 @@
 package com.specpulse.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.specpulse.api.mapper.RegistryApiMapper;
 import com.specpulse.registry.RegistryService;
 import com.specpulse.registry.ServiceDTO;
+import com.specpulse.registry.ServiceValidationRequest;
+import com.specpulse.registry.ServiceValidationResult;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,7 +21,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doNothing;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -34,6 +40,9 @@ class RegistryControllerTest {
 
     @MockBean
     private RegistryService registryService;
+
+    @MockBean
+    private RegistryApiMapper registryApiMapper;
 
     private ServiceDTO testService;
 
@@ -181,7 +190,8 @@ class RegistryControllerTest {
                 "https://api.updated.com/openapi.json",
                 "Updated Service",
                 false,
-                null
+                null,
+                false
         );
 
         var updatedService = new ServiceDTO(
@@ -249,9 +259,13 @@ class RegistryControllerTest {
                 "https://api.test.com/openapi.json"
         );
 
-        var response = new RegistryController.ValidateResponse(true, List.of());
+        var response = new ServiceValidationResult(true, List.of());
+        var serviceRequest = new ServiceValidationRequest(request.name(), request.openApiUrl());
 
+        given(registryApiMapper.toServiceValidationRequest(any())).willReturn(serviceRequest);
         given(registryService.validateService(any())).willReturn(response);
+        given(registryApiMapper.toValidateResponse(response))
+                .willReturn(new RegistryController.ValidateResponse(true, List.of()));
 
         // When & Then
         mockMvc.perform(post("/api/v1/registry/validate")

@@ -1,6 +1,6 @@
 // OpenAPI Specification Types
 
-export interface OpenAPISpec {
+export interface OpenAPISpecV3 {
     openapi: string;
     info: InfoObject;
     servers?: ServerObject[];
@@ -10,6 +10,23 @@ export interface OpenAPISpec {
     tags?: TagObject[];
     externalDocs?: ExternalDocumentationObject;
 }
+
+// Swagger 2.0 (aka OpenAPI 2.0)
+export interface Swagger2Spec {
+    swagger: string;
+    info: InfoObject;
+    host?: string;
+    basePath?: string;
+    schemes?: string[];
+    consumes?: string[];
+    produces?: string[];
+    // Swagger 2.0 path items/operations differ from OAS3, so we keep them loosely typed.
+    paths: Record<string, unknown>;
+    tags?: TagObject[];
+    externalDocs?: ExternalDocumentationObject;
+}
+
+export type AnySpec = OpenAPISpecV3 | Swagger2Spec;
 
 export interface InfoObject {
     title: string;

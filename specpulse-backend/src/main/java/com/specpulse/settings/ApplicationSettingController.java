@@ -1,5 +1,6 @@
 package com.specpulse.settings;
 
+import com.specpulse.api.mapper.ApplicationSettingApiMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -10,7 +11,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 import java.util.Map;
@@ -24,6 +31,7 @@ import java.util.Map;
 public class ApplicationSettingController {
 
     private final ApplicationSettingService settingService;
+    private final ApplicationSettingApiMapper settingApiMapper;
 
     @GetMapping
     @Operation(summary = "Получить все настройки", description = "Возвращает все настройки сгруппированные по категориям")
@@ -69,7 +77,14 @@ public class ApplicationSettingController {
     public ResponseEntity<List<ApplicationSettingDTO>> updateSettings(
             @RequestBody Map<String, Object> updates) {
         log.info("Bulk updating {} settings", updates.size());
-        return ResponseEntity.ok(settingService.updateSettings(updates));
+        var mappedUpdates = settingApiMapper.toBulkUpdateCommands(updates);
+
+        if (!mappedUpdates.invalidKeys().isEmpty()) {
+            log.warn("Skipped {} invalid setting keys: {}",
+                    mappedUpdates.invalidKeys().size(), mappedUpdates.invalidKeys());
+        }
+
+        return ResponseEntity.ok(settingService.updateSettings(mappedUpdates.commands()));
     }
 
     @GetMapping("/categories")

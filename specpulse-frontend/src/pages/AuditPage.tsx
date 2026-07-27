@@ -43,6 +43,7 @@ export default function AuditPage() {
     const {
         data: paginatedLogs,
         page,
+        pageSize,
         totalPages,
         totalItems,
         nextPage,
@@ -168,12 +169,12 @@ export default function AuditPage() {
                         <div className="mt-6 flex items-center justify-between border-t border-gray-200 pt-4">
                             <div className="flex items-center gap-4">
                                 <p className="text-sm text-gray-700">
-                                    Showing <span className="font-medium">{(page - 1) * 20 + 1}</span> to{' '}
-                                    <span className="font-medium">{Math.min(page * 20, totalItems)}</span>{' '}
+                                    Showing <span className="font-medium">{(page - 1) * pageSize + 1}</span> to{' '}
+                                    <span className="font-medium">{Math.min(page * pageSize, totalItems)}</span>{' '}
                                     of <span className="font-medium">{totalItems}</span> results
                                 </p>
                                 <select
-                                        value={20}
+                                        value={pageSize}
                                         onChange={(e) => setPageSize(Number(e.target.value))}
                                         className="rounded-md border-gray-300 py-1 pl-2 pr-8 text-sm focus:border-blue-500 focus:ring-blue-500"
                                 >

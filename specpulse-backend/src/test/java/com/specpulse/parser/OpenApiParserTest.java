@@ -71,8 +71,8 @@ class OpenApiParserTest {
     }
 
     @Test
-    @DisplayName("Should reject Swagger 2.0 spec")
-    void shouldRejectSwagger2Spec() {
+    @DisplayName("Should convert Swagger 2.0 spec to OpenAPI 3.x")
+    void shouldConvertSwagger2Spec() {
         // Given
         String spec = """
                 {
@@ -81,7 +81,20 @@ class OpenApiParserTest {
                         "title": "Legacy API",
                         "version": "1.0.0"
                     },
-                    "paths": {}
+                    "host": "api.example.com",
+                    "schemes": ["https"],
+                    "basePath": "/v1",
+                    "paths": {
+                        "/ping": {
+                            "get": {
+                                "responses": {
+                                    "200": {
+                                        "description": "ok"
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
                 """;
 
@@ -89,9 +102,10 @@ class OpenApiParserTest {
         OpenApiParser.ParseResult result = parser.parse(spec);
 
         // Then
-        assertThat(result.success()).isFalse();
-        assertThat(result.errorMessage()).contains("Swagger 2.0");
-        assertThat(result.errorMessage()).contains("not supported");
+        assertThat(result.success()).isTrue();
+        assertThat(result.errorMessage()).isNull();
+        assertThat(result.title()).isEqualTo("Legacy API");
+        assertThat(result.contentHash()).isNotNull();
     }
 
     @Test

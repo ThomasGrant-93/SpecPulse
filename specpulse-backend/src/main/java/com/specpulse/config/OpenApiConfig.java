@@ -15,11 +15,14 @@ public class OpenApiConfig {
 
     @Bean
     public OpenAPI customOpenAPI() {
+        String description = "API для управления OpenAPI спецификациями: регистрация сервисов, "
+                + "pull спецификаций, сравнение версий, детектирование breaking changes";
+
         return new OpenAPI()
                 .info(new Info()
                         .title(appName + " API")
                         .version("0.1.0")
-                        .description("API для управления OpenAPI спецификациями: регистрация сервисов, pull спецификаций, сравнение версий, детектирование breaking changes")
+                        .description(description)
                         .contact(new Contact()
                                 .name("SpecPulse Team")
                                 .email("support@specpulse.com")));

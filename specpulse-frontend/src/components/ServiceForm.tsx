@@ -217,9 +217,9 @@ export default function ServiceForm({onSubmit, onCancel, initialData}: ServiceFo
                                                     </button>
                                             )}
                                         </div>
-                                        <p className="mt-1 text-xs text-gray-500">
-                                            OpenAPI 3.x specification URL (Swagger 2.0 is not supported)
-                                        </p>
+                                            <p className="mt-1 text-xs text-gray-500">
+                                             OpenAPI 3.x or Swagger 2.0 specification URL
+                                         </p>
                                     </div>
 
                                     <div>

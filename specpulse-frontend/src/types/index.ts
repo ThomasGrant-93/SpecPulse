@@ -132,6 +132,8 @@ export interface UpdateServiceRequest {
     openApiUrl?: string;
     description?: string;
     enabled?: boolean;
+    groupId?: number | null;
+    clearGroup?: boolean;
 }
 
 export interface PullResult {
