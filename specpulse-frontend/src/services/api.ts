@@ -91,7 +91,17 @@ export const registryApi = {
 export const versionsApi = {
     getByService: (serviceId: number) => api.get<SpecVersion[]>(`/versions/service/${serviceId}`),
     getLatest: (serviceId: number) => api.get<SpecVersion>(`/versions/service/${serviceId}/latest`),
-    getById: (id: number) => api.get<SpecVersion>(`/versions/${id}`),
+    getById: (
+        id: number,
+        params?: {
+            diff_only?: boolean;
+            exclude_unchanged?: boolean;
+            compare_to?: number;
+        }
+    ) => {
+        const url = `/versions/${id}`;
+        return params ? api.get<SpecVersion>(url, { params }) : api.get<SpecVersion>(url);
+    },
 };
 
 // Diffs API
