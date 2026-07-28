@@ -2,6 +2,11 @@ name: Docker Hub Publish
 
 on:
   workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Docker image tag to publish (e.g., 1.2.3). Defaults to current branch name.'
+        required: false
+        default: ''
   push:
     branches:
       - develop
@@ -28,14 +33,23 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Compute tag
+        id: tag
+        shell: bash
+        run: |
+          if [ -n "${{ github.event.inputs.image_tag || '' }}" ]; then
+            echo "tag=${{ github.event.inputs.image_tag }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=$GITHUB_REF_NAME" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
           context: .
           file: ./Dockerfile
           push: true
-          tags: |
-            ${{ env.IMAGE_NAME }}:${{ github.sha }}
-            ${{ env.IMAGE_NAME }}:latest
+
+          tags: ${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.tag }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
