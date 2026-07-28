@@ -15,9 +15,10 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.io.IOException;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -33,27 +34,24 @@ class StaticAssetsServingTest {
     @SuppressWarnings("unused")
     private DiffService diffService;
 
-    private static Path frontendAssetsDir() {
-        Path p = Path.of("specpulse-frontend", "dist", "assets");
-        if (Files.isDirectory(p)) return p;
-
-        // When tests are executed from the backend module directory.
-        Path p2 = Path.of("..", "specpulse-frontend", "dist", "assets");
-        if (Files.isDirectory(p2)) return p2;
-
-        Path p3 = Path.of("..", "..", "specpulse-frontend", "dist", "assets");
-        if (Files.isDirectory(p3)) return p3;
-
-        throw new AssertionError("Cannot locate specpulse-frontend dist assets directory. Tried: " + p + ", " + p2 + ", " + p3);
+    private static String indexHtmlFromClasspath() throws IOException {
+        InputStream is = StaticAssetsServingTest.class.getClassLoader()
+                .getResourceAsStream("static/index.html");
+        Assertions.assertNotNull(is, "Expected static/index.html to be present on test classpath");
+        try (is) {
+            return new String(is.readAllBytes(), StandardCharsets.UTF_8);
+        }
     }
 
-    private static String pickFirstAssetFile(Path dir, String glob) throws IOException {
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir, glob)) {
-            for (Path p : stream) {
-                return p.getFileName().toString();
-            }
-        }
-        throw new AssertionError("No assets found in " + dir + " for pattern " + glob);
+    private static String extractFirstAssetFile(String indexHtml, String extension) {
+        // Example Vite tags:
+        // <script type="module" crossorigin src="/assets/index-DvlMvI44.js"></script>
+        // <link rel="stylesheet" href="/assets/index-BZAwdAaW.css">
+        Pattern p = Pattern.compile("/assets/([^\"']+\\." + Pattern.quote(extension) + ")");
+        Matcher m = p.matcher(indexHtml);
+        Assertions.assertTrue(m.find(),
+                "Could not extract a /assets/*." + extension + " filename from index.html");
+        return m.group(1);
     }
 
     @Test
@@ -71,8 +69,8 @@ class StaticAssetsServingTest {
 
     @Test
     void shouldServeHashedJsWithCorrectMimeType() throws Exception {
-        Path assetsDir = frontendAssetsDir();
-        String jsFile = pickFirstAssetFile(assetsDir, "*.js");
+        String indexHtml = indexHtmlFromClasspath();
+        String jsFile = extractFirstAssetFile(indexHtml, "js");
 
         String classpathResource = "static/assets/" + jsFile;
         Assertions.assertNotNull(
@@ -89,8 +87,8 @@ class StaticAssetsServingTest {
 
     @Test
     void shouldServeHashedCssWithCorrectMimeType() throws Exception {
-        Path assetsDir = frontendAssetsDir();
-        String cssFile = pickFirstAssetFile(assetsDir, "*.css");
+        String indexHtml = indexHtmlFromClasspath();
+        String cssFile = extractFirstAssetFile(indexHtml, "css");
 
         String classpathResource = "static/assets/" + cssFile;
         Assertions.assertNotNull(
@@ -113,6 +111,7 @@ class StaticAssetsServingTest {
     void shouldSupportSpaRefreshForKnownRoute() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.get("/services/1"))
                 .andExpect(status().isOk())
-                .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_HTML));
+                .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_HTML))
+                .andExpect(content().string(Matchers.containsString("<!doctype html")));
     }
 }
