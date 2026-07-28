@@ -1,5 +1,5 @@
 # SpecPulse Makefile
-# Управление проектом SpecPulse
+# SpecPulse Project Management
 
 .PHONY: help dev build test clean docker docker-up docker-down logs backend frontend install-deps lint format \
 	build-docker docker-login docker-push docker-publish
@@ -44,10 +44,10 @@ COLOR_BLUE := \033[34m
 COLOR_RED := \033[31m
 
 # ==============================================================================
-# Главная цель
+# Main Goal
 # ==============================================================================
 
-help: ## Показать справку по доступным командам
+help: ## Show help for available commands
 	@echo "$(COLOR_BLUE)SpecPulse - OpenAPI Management System$(COLOR_RESET)"
 	@echo ""
 	@echo "$(COLOR_YELLOW)Основные команды:$(COLOR_RESET)"
@@ -60,10 +60,10 @@ help: ## Показать справку по доступным команда�
 	@echo "  make docker-up        # Запустить в Docker"
 
 # ==============================================================================
-# Разработка
+# Development
 # ==============================================================================
 
-dev: ## Запустить backend и frontend для разработки (в фоне)
+dev: ## Start backend and frontend for development (in background)
 	@echo "$(COLOR_GREEN)Запуск режима разработки...$(COLOR_RESET)"
 	@echo "$(COLOR_BLUE)Backend: http://localhost:$(BACKEND_PORT)$(COLOR_RESET)"
 	@echo "$(COLOR_BLUE)Frontend: http://localhost:$(FRONTEND_PORT)$(COLOR_RESET)"
@@ -78,49 +78,49 @@ dev: ## Запустить backend и frontend для разработки (в �
 	@echo ""
 	@echo "$(COLOR_YELLOW)Для остановки: make stop$(COLOR_RESET)"
 
-dev-foreground: ## Запустить backend и frontend в foreground режиме
+dev-foreground: ## Start backend and frontend in foreground mode
 	@echo "$(COLOR_GREEN)Запуск в foreground режиме...$(COLOR_RESET)"
 	@echo "$(COLOR_YELLOW)Нажмите Ctrl+C для остановки$(COLOR_RESET)"
 	@cd $(FRONTEND_DIR) && npm run dev &
 	@./gradlew :$(BACKEND_DIR):bootRun
 
-stop: ## Остановить все запущенные процессы
+stop: ## Stop all running processes
 	@echo "$(COLOR_YELLOW)Остановка всех процессов...$(COLOR_RESET)"
 	@pkill -f "gradlew.*bootRun" 2>/dev/null || true
 	@pkill -f "npm.*dev" 2>/dev/null || true
 	@pkill -f "vite" 2>/dev/null || true
 	@echo "$(COLOR_GREEN)Все процессы остановлены$(COLOR_RESET)"
 
-backend: ## Запустить только backend
+backend: ## Run only backend
 	@echo "$(COLOR_GREEN)Запуск backend...$(COLOR_RESET)"
 	@./gradlew :$(BACKEND_DIR):bootRun
 
-frontend: ## Запустить только frontend
+frontend: ## Run only frontend
 	@echo "$(COLOR_GREEN)Запуск frontend...$(COLOR_RESET)"
 	@cd $(FRONTEND_DIR) && npm run dev
 
 # ==============================================================================
-# Сборка
+# Build
 # ==============================================================================
 
-build: build-frontend build-backend ## Собрать backend и frontend
+build: build-frontend build-backend ## Build backend and frontend
 
-build-backend: build-frontend ## Собрать только backend
+build-backend: build-frontend ## Build only backend
 	@echo "$(COLOR_GREEN)Сборка backend...$(COLOR_RESET)"
 	@./gradlew :$(BACKEND_DIR):build -x test
 	@echo "$(COLOR_GREEN)Backend собран: $(BACKEND_DIR)/build/libs/$(COLOR_RESET)"
 
-build-frontend: ## Собрать только frontend
+build-frontend: ## Build only frontend
 	@echo "$(COLOR_GREEN)Сборка frontend...$(COLOR_RESET)"
 	@cd $(FRONTEND_DIR) && npm run build
 	@echo "$(COLOR_GREEN)Frontend собран: $(FRONTEND_DIR)/dist/$(COLOR_RESET)"
 
-build-docker: ## Собрать Docker образ (локально)
+build-docker: ## Build Docker image locally
 	@echo "$(COLOR_GREEN)Сборка Docker образа...$(COLOR_RESET)"
 	@docker build -t $(PROJECT_NAME):$(DOCKER_TAG) .
 	@echo "$(COLOR_GREEN)Docker образ собран: $(PROJECT_NAME):$(DOCKER_TAG)$(COLOR_RESET)"
 
-docker-login: ## Войти в Docker Hub (используйте DOCKERHUB_USERNAME и DOCKERHUB_TOKEN)
+docker-login: ## Log in to Docker Hub (use DOCKERHUB_USERNAME and DOCKERHUB_TOKEN)
 	@if [ -z "$(DOCKERHUB_USERNAME)" ] || [ -z "$(DOCKERHUB_TOKEN)" ]; then \
 		echo "$(COLOR_RED)Set DOCKERHUB_USERNAME and DOCKERHUB_TOKEN first$(COLOR_RESET)"; \
 		exit 1; \
@@ -128,7 +128,7 @@ docker-login: ## Войти в Docker Hub (используйте DOCKERHUB_USER
 	@echo "$(COLOR_YELLOW)Logging into Docker Hub...$(COLOR_RESET)"
 	@echo "$(DOCKERHUB_TOKEN)" | docker login -u "$(DOCKERHUB_USERNAME)" --password-stdin
 
-docker-push: ## Тэгировать и загрузить образ в Docker Hub
+docker-push: ## Tag and push the image to Docker Hub
 	@if [ -z "$(DOCKERHUB_IMAGE)" ]; then \
 		echo "$(COLOR_RED)Set DOCKERHUB_IMAGE (or DOCKERHUB_USERNAME) first$(COLOR_RESET)"; \
 		exit 1; \
@@ -137,68 +137,68 @@ docker-push: ## Тэгировать и загрузить образ в Docker 
 	@docker tag $(PROJECT_NAME):$(DOCKER_TAG) $(DOCKERHUB_IMAGE):$(DOCKER_TAG)
 	@docker push $(DOCKERHUB_IMAGE):$(DOCKER_TAG)
 
-docker-publish: build-docker docker-login docker-push ## Собрать и загрузить образ в Docker Hub
+docker-publish: build-docker docker-login docker-push ## Build and publish image to Docker Hub
 	@echo "$(COLOR_GREEN)Docker image published to Docker Hub$(COLOR_RESET)"
 
 # ==============================================================================
-# Тесты
+# Tests
 # ==============================================================================
 
-test: test-backend test-frontend ## Запустить все тесты
+test: test-backend test-frontend ## Run all tests
 
-test-backend: ## Запустить тесты backend
+test-backend: ## Run backend tests
 	@echo "$(COLOR_GREEN)Запуск тестов backend...$(COLOR_RESET)"
 	@./gradlew :$(BACKEND_DIR):test
 
-test-frontend: ## Запустить тесты frontend
+test-frontend: ## Run frontend tests
 	@echo "$(COLOR_GREEN)Запуск тестов frontend...$(COLOR_RESET)"
 	@cd $(FRONTEND_DIR) && npm test -- --run
 
-test-coverage: test-coverage-backend test-coverage-frontend ## Запустить тесты с покрытием
+test-coverage: test-coverage-backend test-coverage-frontend ## Run tests with coverage
 
-test-coverage-backend: ## Запустить тесты backend с покрытием
+test-coverage-backend: ## Run backend tests with coverage
 	@echo "$(COLOR_GREEN)Запуск тестов backend с покрытием...$(COLOR_RESET)"
 	@./gradlew :$(BACKEND_DIR):test jacocoTestReport
 
-test-coverage-frontend: ## Запустить тесты frontend с покрытием
+test-coverage-frontend: ## Run frontend tests with coverage
 	@echo "$(COLOR_GREEN)Запуск тестов frontend с покрытием...$(COLOR_RESET)"
 	@cd $(FRONTEND_DIR) && npm run test:coverage
 
-test-ui: ## Запустить тесты frontend в UI режиме
+test-ui: ## Run frontend tests in UI mode
 	@echo "$(COLOR_GREEN)Запуск тестов frontend в UI режиме...$(COLOR_RESET)"
 	@cd $(FRONTEND_DIR) && npm run test:ui
 
 # ==============================================================================
-# Установка зависимостей
+# Dependency Installation
 # ==============================================================================
 
-install-deps: install-deps-backend install-deps-frontend ## Установить все зависимости
+install-deps: install-deps-backend install-deps-frontend ## Install all dependencies
 
-install-deps-backend: ## Установить зависимости backend
+install-deps-backend: ## Install backend dependencies
 	@echo "$(COLOR_GREEN)Установка зависимостей backend...$(COLOR_RESET)"
 	@./gradlew :$(BACKEND_DIR):dependencies
 
-install-deps-frontend: ## Установить зависимости frontend
+install-deps-frontend: ## Install frontend dependencies
 	@echo "$(COLOR_GREEN)Установка зависимостей frontend...$(COLOR_RESET)"
 	@cd $(FRONTEND_DIR) && npm install
 
 # ==============================================================================
-# Линтинг и форматирование
+# Linting and Formatting
 # ==============================================================================
 
-lint: lint-backend lint-frontend ## Запустить линтеры
+lint: lint-backend lint-frontend ## Run linters
 
-lint-backend: ## Запустить линтер backend
+lint-backend: ## Run backend linter
 	@echo "$(COLOR_GREEN)Линтинг backend...$(COLOR_RESET)"
 	@./gradlew :$(BACKEND_DIR):checkstyleMain :$(BACKEND_DIR):checkstyleTest
 
-lint-frontend: ## Запустить линтер frontend
+lint-frontend: ## Run frontend linter
 	@echo "$(COLOR_GREEN)Линтинг frontend...$(COLOR_RESET)"
 	@cd $(FRONTEND_DIR) && npm run lint
 
-format: format-frontend ## Отформатировать код
+format: format-frontend ## Format code
 
-format-frontend: ## Отформатировать frontend код
+format-frontend: ## Format frontend code
 	@echo "$(COLOR_GREEN)Форматирование frontend...$(COLOR_RESET)"
 	@cd $(FRONTEND_DIR) && npx prettier --write "src/**/*.{ts,tsx,js,jsx,css,json}"
 
@@ -206,7 +206,7 @@ format-frontend: ## Отформатировать frontend код
 # Docker
 # ==============================================================================
 
-docker-up: ## Запустить Docker Compose
+docker-up: ## Start Docker Compose
 	@echo "$(COLOR_GREEN)Запуск Docker Compose...$(COLOR_RESET)"
 	@docker-compose -f $(COMPOSE_FILE) up -d --build
 	@echo ""
@@ -217,25 +217,25 @@ docker-up: ## Запустить Docker Compose
 	@echo ""
 	@echo "$(COLOR_YELLOW)Для остановки: make docker-down$(COLOR_RESET)"
 
-docker-down: ## Остановить Docker Compose
+docker-down: ## Stop Docker Compose
 	@echo "$(COLOR_YELLOW)Остановка Docker Compose...$(COLOR_RESET)"
 	@docker-compose -f $(COMPOSE_FILE) down
 
-docker-logs: ## Показать логи Docker контейнеров
+docker-logs: ## Show Docker container logs
 	@docker-compose -f $(COMPOSE_FILE) logs -f
 
-docker-restart: docker-down docker-up ## Перезапустить Docker Compose
+docker-restart: docker-down docker-up ## Restart Docker Compose
 
-docker-clean: ## Очистить Docker ресурсы
+docker-clean: ## Clean Docker resources
 	@echo "$(COLOR_YELLOW)Очистка Docker ресурсов...$(COLOR_RESET)"
 	@docker-compose -f $(COMPOSE_FILE) down -v
 	@docker system prune -f
 
 # ==============================================================================
-# База данных
+# Database
 # ==============================================================================
 
-db-start: ## Запустить PostgreSQL
+db-start: ## Start PostgreSQL
 	@echo "$(COLOR_GREEN)Запуск PostgreSQL...$(COLOR_RESET)"
 	@docker run --name $(DB_NAME)-db \
 		-e POSTGRES_DB=$(DB_NAME) \
@@ -245,37 +245,37 @@ db-start: ## Запустить PostgreSQL
 		-d postgres:15
 	@echo "$(COLOR_GREEN)PostgreSQL запущен на порту $(DB_PORT)$(COLOR_RESET)"
 
-db-stop: ## Остановить PostgreSQL
+db-stop: ## Stop PostgreSQL
 	@echo "$(COLOR_YELLOW)Остановка PostgreSQL...$(COLOR_RESET)"
 	@docker stop $(DB_NAME)-db && docker rm $(DB_NAME)-db
 
-db-reset: db-stop db-start ## Перезапустить PostgreSQL с очисткой данных
+db-reset: db-stop db-start ## Restart PostgreSQL and clear data
 
 # ==============================================================================
-# Очистка
+# Cleanup
 # ==============================================================================
 
-clean: clean-backend clean-frontend clean-test ## Очистить все артефакты сборки
+clean: clean-backend clean-frontend clean-test ## Remove build artifacts
 
-clean-backend: ## Очистить backend
+clean-backend: ## Clean backend
 	@echo "$(COLOR_YELLOW)Очистка backend...$(COLOR_RESET)"
 	@./gradlew :$(BACKEND_DIR):clean
 
-clean-frontend: ## Очистить frontend
+clean-frontend: ## Clean frontend
 	@echo "$(COLOR_YELLOW)Очистка frontend...$(COLOR_RESET)"
 	@cd $(FRONTEND_DIR) && npm run clean
 
-clean-test: ## Очистить тестовые артефакты
+clean-test: ## Clean test artifacts
 	@echo "$(COLOR_YELLOW)Очистка тестовых артефактов...$(COLOR_RESET)"
 	@rm -rf $(BACKEND_DIR)/build/test-results
 	@rm -rf $(BACKEND_DIR)/build/reports/tests
 	@rm -rf $(FRONTEND_DIR)/coverage
 
 # ==============================================================================
-# Проверка статуса
+# Status Check
 # ==============================================================================
 
-status: ## Проверить статус сервисов
+status: ## Check status of services
 	@echo "$(COLOR_BLUE)Проверка статуса сервисов...$(COLOR_RESET)"
 	@echo ""
 	@echo "$(COLOR_YELLOW)Backend (порт $(BACKEND_PORT)):$(COLOR_RESET)"
@@ -294,16 +294,16 @@ status: ## Проверить статус сервисов
 		echo "  $(COLOR_YELLOW)- Не запущен в Docker$(COLOR_RESET)"
 
 # ==============================================================================
-# API утилиты
+# API Utilities
 # ==============================================================================
 
-api-docs: ## Открыть Swagger UI
+api-docs: ## Open Swagger UI
 	@echo "$(COLOR_GREEN)Открытие Swagger UI...$(COLOR_RESET)"
 	@xdg-open http://localhost:$(BACKEND_PORT)/swagger-ui.html 2>/dev/null || \
 		open http://localhost:$(BACKEND_PORT)/swagger-ui.html 2>/dev/null || \
 		echo "Откройте http://localhost:$(BACKEND_PORT)/swagger-ui.html в браузере"
 
-api-services: ## Получить список сервисов
+api-services: ## Get list of services
 	@echo "$(COLOR_GREEN)Список сервисов:$(COLOR_RESET)"
 	@curl -s http://localhost:$(BACKEND_PORT)/api/v1/registry | jq '.' 2>/dev/null || \
 		curl -s http://localhost:$(BACKEND_PORT)/api/v1/registry
@@ -312,6 +312,6 @@ api-services: ## Получить список сервисов
 # CI/CD
 # ==============================================================================
 
-ci: install-deps lint test build ## Полный CI пайплайн
+ci: install-deps lint test build ## Full CI pipeline
 
-pr: clean ci ## Подготовка к PR (очистка + CI)
+pr: clean ci ## Prepare PR (cleanup + CI)
