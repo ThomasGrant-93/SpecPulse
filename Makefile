@@ -1,7 +1,8 @@
 # SpecPulse Makefile
 # Управление проектом SpecPulse
 
-.PHONY: help dev build test clean docker docker-up docker-down logs backend frontend install-deps lint format
+.PHONY: help dev build test clean docker docker-up docker-down logs backend frontend install-deps lint format \
+	build-docker docker-login docker-push docker-publish
 
 # ==============================================================================
 # Переменные
@@ -24,6 +25,14 @@ DB_PASSWORD := specpulse
 # Docker
 COMPOSE_FILE := docker-compose.yml
 PROJECT_NAME := specpulse
+
+# Docker publishing
+DOCKERHUB_USERNAME ?=
+DOCKERHUB_TOKEN ?=
+# Full Docker Hub repo name: "<username>/<repository>".
+DOCKERHUB_IMAGE ?= $(if $(DOCKERHUB_USERNAME),$(DOCKERHUB_USERNAME)/$(PROJECT_NAME),)
+# Tag to build/push. Defaults to current short git SHA.
+DOCKER_TAG ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo latest)
 
 # Colors for output
 COLOR_RESET := \033[0m
@@ -104,10 +113,34 @@ build-frontend: ## Собрать только frontend
 	@cd $(FRONTEND_DIR) && npm run build
 	@echo "$(COLOR_GREEN)Frontend собран: $(FRONTEND_DIR)/dist/$(COLOR_RESET)"
 
-build-docker: ## Собрать Docker образ
+build-docker: ## Собрать Docker образ (локально)
 	@echo "$(COLOR_GREEN)Сборка Docker образа...$(COLOR_RESET)"
-	@docker build -t $(PROJECT_NAME):latest .
-	@echo "$(COLOR_GREEN)Docker образ собран: $(PROJECT_NAME):latest$(COLOR_RESET)"
+	@docker build -t $(PROJECT_NAME):$(DOCKER_TAG) .
+	@echo "$(COLOR_GREEN)Docker образ собран: $(PROJECT_NAME):$(DOCKER_TAG)$(COLOR_RESET)"
+	@docker tag $(PROJECT_NAME):$(DOCKER_TAG) $(PROJECT_NAME):latest
+	@echo "$(COLOR_GREEN)Docker образ также помечен: $(PROJECT_NAME):latest$(COLOR_RESET)"
+
+docker-login: ## Войти в Docker Hub (используйте DOCKERHUB_USERNAME и DOCKERHUB_TOKEN)
+	@if [ -z "$(DOCKERHUB_USERNAME)" ] || [ -z "$(DOCKERHUB_TOKEN)" ]; then \
+		echo "$(COLOR_RED)Set DOCKERHUB_USERNAME and DOCKERHUB_TOKEN first$(COLOR_RESET)"; \
+		exit 1; \
+	fi
+	@echo "$(COLOR_YELLOW)Logging into Docker Hub...$(COLOR_RESET)"
+	@echo "$(DOCKERHUB_TOKEN)" | docker login -u "$(DOCKERHUB_USERNAME)" --password-stdin
+
+docker-push: ## Тэгировать и загрузить образ в Docker Hub
+	@if [ -z "$(DOCKERHUB_IMAGE)" ]; then \
+		echo "$(COLOR_RED)Set DOCKERHUB_IMAGE (or DOCKERHUB_USERNAME) first$(COLOR_RESET)"; \
+		exit 1; \
+	fi
+	@echo "$(COLOR_GREEN)Pushing $(DOCKERHUB_IMAGE):$(DOCKER_TAG)$(COLOR_RESET)"
+	@docker tag $(PROJECT_NAME):$(DOCKER_TAG) $(DOCKERHUB_IMAGE):$(DOCKER_TAG)
+	@docker tag $(PROJECT_NAME):$(DOCKER_TAG) $(DOCKERHUB_IMAGE):latest
+	@docker push $(DOCKERHUB_IMAGE):$(DOCKER_TAG)
+	@docker push $(DOCKERHUB_IMAGE):latest
+
+docker-publish: build-docker docker-login docker-push ## Собрать и загрузить образ в Docker Hub
+	@echo "$(COLOR_GREEN)Docker image published to Docker Hub$(COLOR_RESET)"
 
 # ==============================================================================
 # Тесты
