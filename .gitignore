@@ -98,6 +98,7 @@ docker-compose.override.yml
 specpulse-frontend/node_modules/
 specpulse-frontend/dist/
 specpulse-frontend/.vite/
+*.tsbuildinfo
 
 # ===========================
 # Makefile
