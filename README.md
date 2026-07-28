@@ -94,7 +94,7 @@ make dev
 # Open browser
 # Frontend: http://localhost:3000
 # Backend API: http://localhost:8080
-# Swagger UI: http://localhost:8080/swagger-ui.html
+# Swagger UI: http://localhost:8080/swagger-ui
 ```
 
 ### Option 2: Manual Setup
@@ -102,10 +102,10 @@ make dev
 ```bash
 # 1. Start PostgreSQL
 docker run --name specpulse-db \
-  -e POSTGRES_DB=specpulse \
-  -e POSTGRES_USER=specpulse \
-  -e POSTGRES_PASSWORD=specpulse \
-  -p 5432:5432 -d postgres:15
+    -e POSTGRES_DB=specpulse \
+    -e POSTGRES_USER=specpulse \
+    -e POSTGRES_PASSWORD=specpulse \
+    -p 5432:5432 -d postgres:15
 
 # 2. Run backend (port 8080)
 ./gradlew :specpulse-backend:bootRun
@@ -170,15 +170,16 @@ curl http://localhost:8080/api/v1/diffs/service/1
 
 ### Environment Variables
 
-| Variable                                    | Default                                      | Description             |
-|---------------------------------------------|----------------------------------------------|-------------------------|
-| `SPRING_DATASOURCE_URL`                     | `jdbc:postgresql://localhost:5432/specpulse` | Database URL            |
-| `SPRING_DATASOURCE_USERNAME`                | `specpulse`                                  | Database user           |
-| `SPRING_DATASOURCE_PASSWORD`                | `specpulse`                                  | Database password       |
-| `SPECPULSE_SCHEDULER_ENABLED`               | `true`                                       | Enable scheduler        |
-| `SPECPULSE_SCHEDULER_PULL_INTERVAL_SECONDS` | `300`                                        | Pull interval (seconds) |
-| `LOGGING_LEVEL_ROOT`                        | `INFO`                                       | Root log level          |
-| `LOGGING_LEVEL_COM_SPECPULSE`               | `DEBUG`                                      | App log level           |
+| Variable                                    | Default                                      | Description                                                            |
+|---------------------------------------------|----------------------------------------------|------------------------------------------------------------------------|
+| `SPRING_DATASOURCE_URL`                     | `jdbc:postgresql://localhost:5432/specpulse` | Database URL                                                           |
+| `SPRING_DATASOURCE_USERNAME`                | `specpulse`                                  | Database user                                                          |
+| `SPRING_DATASOURCE_PASSWORD`                | `specpulse`                                  | Database password                                                      |
+| `SPECPULSE_SCHEDULER_ENABLED`               | `true`                                       | Enable scheduler                                                       |
+| `SPECPULSE_SCHEDULER_PULL_INTERVAL_SECONDS` | `300`                                        | Pull interval (seconds)                                                |
+| `SPECPULSE_AUTH_TOKEN`                      | (empty)                                      | When set, protected endpoints require `Authorization: Bearer <token>`. |
+| `LOGGING_LEVEL_ROOT`                        | `INFO`                                       | Root log level                                                         |
+| `LOGGING_LEVEL_COM_SPECPULSE`               | `DEBUG`                                      | App log level                                                          |
 
 ### Application Settings
 
@@ -256,7 +257,7 @@ make test-ui
 | DELETE | `/groups/{id}`          | Delete group          |
 | POST   | `/groups/{id}/services` | Add services to group |
 
-For full API documentation, see [Swagger UI](http://localhost:8080/swagger-ui.html).
+For full API documentation, see [Swagger UI](http://localhost:8080/swagger-ui).
 
 ## 📁 Project Structure
 
@@ -332,6 +333,6 @@ This project is licensed under the [MIT License](LICENSE).
 
 ## 📞 Support
 
-- **Documentation:** [Swagger UI](http://localhost:8080/swagger-ui.html)
+- **Documentation:** [Swagger UI](http://localhost:8080/swagger-ui)
 - **Issues:** [GitHub Issues](https://github.com/ThomasGrant-93/specpulse/issues)
 - **Discussions:** [GitHub Discussions](https://github.com/ThomasGrant-93/specpulse/discussions)

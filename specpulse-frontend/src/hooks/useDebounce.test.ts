@@ -1,6 +1,6 @@
-import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
-import {act, renderHook} from '@testing-library/react';
-import {useDebounce} from './useDebounce';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, renderHook } from '@testing-library/react';
+import { useDebounce } from './useDebounce';
 
 describe('useDebounce', () => {
     beforeEach(() => {
@@ -12,7 +12,7 @@ describe('useDebounce', () => {
     });
 
     it('should return initial value immediately', () => {
-        const {result} = renderHook(() => useDebounce('initial', {delay: 300}));
+        const { result } = renderHook(() => useDebounce('initial', { delay: 300 }));
 
         expect(result.current.debouncedValue).toBe('initial');
         // Initial state should be debouncing since we just set the value
@@ -20,12 +20,12 @@ describe('useDebounce', () => {
     });
 
     it('should debounce value changes', () => {
-        const {result, rerender} = renderHook(({value}) => useDebounce(value, {delay: 300}), {
-            initialProps: {value: 'initial'},
+        const { result, rerender } = renderHook(({ value }) => useDebounce(value, { delay: 300 }), {
+            initialProps: { value: 'initial' },
         });
 
         // Change value
-        rerender({value: 'updated'});
+        rerender({ value: 'updated' });
 
         // Should be debouncing
         expect(result.current.isDebouncing).toBe(true);
@@ -42,11 +42,11 @@ describe('useDebounce', () => {
     });
 
     it('should not update debounced value before delay', () => {
-        const {result, rerender} = renderHook(({value}) => useDebounce(value, {delay: 500}), {
-            initialProps: {value: 'initial'},
+        const { result, rerender } = renderHook(({ value }) => useDebounce(value, { delay: 500 }), {
+            initialProps: { value: 'initial' },
         });
 
-        rerender({value: 'updated'});
+        rerender({ value: 'updated' });
 
         // Advance time but not enough
         act(() => {
@@ -66,14 +66,14 @@ describe('useDebounce', () => {
     });
 
     it('should reset debouncing when value changes multiple times', () => {
-        const {result, rerender} = renderHook(({value}) => useDebounce(value, {delay: 300}), {
-            initialProps: {value: 'initial'},
+        const { result, rerender } = renderHook(({ value }) => useDebounce(value, { delay: 300 }), {
+            initialProps: { value: 'initial' },
         });
 
         // Multiple rapid changes
-        rerender({value: 'update1'});
-        rerender({value: 'update2'});
-        rerender({value: 'update3'});
+        rerender({ value: 'update1' });
+        rerender({ value: 'update2' });
+        rerender({ value: 'update3' });
 
         expect(result.current.isDebouncing).toBe(true);
         expect(result.current.debouncedValue).toBe('initial');
@@ -89,11 +89,11 @@ describe('useDebounce', () => {
     });
 
     it('should provide reset function', () => {
-        const {result, rerender} = renderHook(({value}) => useDebounce(value, {delay: 300}), {
-            initialProps: {value: 'initial'},
+        const { result, rerender } = renderHook(({ value }) => useDebounce(value, { delay: 300 }), {
+            initialProps: { value: 'initial' },
         });
 
-        rerender({value: 'updated'});
+        rerender({ value: 'updated' });
         expect(result.current.isDebouncing).toBe(true);
 
         // Reset
@@ -106,11 +106,11 @@ describe('useDebounce', () => {
     });
 
     it('should use default delay when not provided', () => {
-        const {result, rerender} = renderHook(({value}) => useDebounce(value), {
-            initialProps: {value: 'initial'},
+        const { result, rerender } = renderHook(({ value }) => useDebounce(value), {
+            initialProps: { value: 'initial' },
         });
 
-        rerender({value: 'updated'});
+        rerender({ value: 'updated' });
         expect(result.current.isDebouncing).toBe(true);
 
         // Default delay is 300ms
@@ -123,9 +123,9 @@ describe('useDebounce', () => {
     });
 
     it('should handle custom delay', () => {
-        const {result, rerender} = renderHook(() => useDebounce('test', {delay: 1000}));
+        const { result, rerender } = renderHook(() => useDebounce('test', { delay: 1000 }));
 
-        rerender({value: 'updated'});
+        rerender({ value: 'updated' });
 
         act(() => {
             vi.advanceTimersByTime(500);

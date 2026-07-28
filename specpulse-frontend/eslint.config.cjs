@@ -15,9 +15,9 @@ module.exports = [
         ignores: ['dist', 'eslint.config.cjs', 'coverage'],
         rules: {
             // General code quality
-            'no-console': ['warn', {allow: ['warn', 'error']}],
-            'eqeqeq': ['error', 'always'],
-            'curly': ['warn', 'multi-line'],
+            'no-console': ['warn', { allow: ['warn', 'error'] }],
+            eqeqeq: ['error', 'always'],
+            curly: ['warn', 'multi-line'],
             'no-var': 'error',
             'prefer-const': 'warn',
         },

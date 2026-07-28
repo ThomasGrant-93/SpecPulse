@@ -1,4 +1,4 @@
-import axios, {type AxiosError} from 'axios';
+import axios, { type AxiosError } from 'axios';
 import type {
     ApplicationSetting,
     AuditLog,
@@ -98,7 +98,7 @@ export const versionsApi = {
 export const diffsApi = {
     getByService: (serviceId: number) => api.get<SpecDiff[]>(`/diffs/service/${serviceId}`),
     getById: (id: number) => api.get<SpecDiff>(`/diffs/${id}`),
-    compare: (oldSpec: string, newSpec: string) => api.post('/diffs/compare', {oldSpec, newSpec}),
+    compare: (oldSpec: string, newSpec: string) => api.post('/diffs/compare', { oldSpec, newSpec }),
 };
 
 // Audit API
@@ -120,8 +120,7 @@ export const groupsApi = {
     getById: (id: number, includeServices = false) =>
         api.get<ServiceGroup>(`/groups/${id}?includeServices=${includeServices}`),
     create: (data: CreateGroupRequest) => api.post<ServiceGroup>('/groups', data),
-    update: (id: number, data: UpdateGroupRequest) =>
-        api.put<ServiceGroup>(`/groups/${id}`, data),
+    update: (id: number, data: UpdateGroupRequest) => api.put<ServiceGroup>(`/groups/${id}`, data),
     delete: (id: number) => api.delete(`/groups/${id}`),
     addServices: (groupId: number, serviceIds: number[]) =>
         api.post<ServiceGroup>(`/groups/${groupId}/services`, serviceIds),
@@ -135,12 +134,11 @@ export const groupsApi = {
 export const settingsApi = {
     getAll: () => api.get<SettingsCategory[]>('/settings'),
     getPublic: () => api.get<SettingsCategory[]>('/settings/public'),
-    getByCategory: (category: string) =>
-        api.get<SettingsCategory>(`/settings/${category}`),
+    getByCategory: (category: string) => api.get<SettingsCategory>(`/settings/${category}`),
     getSetting: (category: string, key: string) =>
         api.get<ApplicationSetting>(`/settings/${category}/${key}`),
     update: (category: string, key: string, value: SettingValue) =>
-        api.put<ApplicationSetting>(`/settings/${category}/${key}`, {value}),
+        api.put<ApplicationSetting>(`/settings/${category}/${key}`, { value }),
     updateBulk: (updates: Record<string, SettingValue>) =>
         api.patch<ApplicationSetting[]>('/settings', updates),
     getCategories: () => api.get<string[]>('/settings/categories'),

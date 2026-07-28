@@ -1,22 +1,21 @@
 package com.specpulse.parser;
 
-import org.springframework.beans.factory.annotation.Value;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.parser.OpenAPIV3Parser;
 import io.swagger.v3.parser.core.models.ParseOptions;
 import io.swagger.v3.parser.core.models.SwaggerParseResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.HexFormat;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import java.util.ArrayList;
+import java.util.HexFormat;
 import java.util.List;
 
 @Component
@@ -46,7 +45,9 @@ public class OpenApiParser {
         // Keep default resolution behavior so parsing produces a valid OpenAPI model.
         // SSRF is mitigated by URL allow/block rules and redirects disabled in the fetch path.
         options.setResolve(true);
-        options.setResolveFully(true);
+        // Do not fully resolve external references during parsing.
+        // Full resolution may trigger outbound network calls for remote $ref targets.
+        options.setResolveFully(false);
 
         // Check if this is Swagger 2.0 or OpenAPI 3.x
         boolean isSwagger2 = specContent.contains("\"swagger\"");

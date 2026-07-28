@@ -1,8 +1,9 @@
 package com.specpulse.version;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.specpulse.exception.ResourceNotFoundException;
 import com.specpulse.parser.OpenApiParser;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -114,7 +115,7 @@ public class VersionService implements SpecVersionPullPort {
     @Transactional(readOnly = true)
     public SpecVersionDTO getVersionById(Long id) {
         SpecVersionEntity entity = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Spec version not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Spec version", id));
         return SpecVersionDTO.fromEntity(entity);
     }
 

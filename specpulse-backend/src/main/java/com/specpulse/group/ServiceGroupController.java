@@ -6,17 +6,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -28,6 +21,23 @@ import java.util.List;
 public class ServiceGroupController {
 
     private final ServiceGroupService groupService;
+
+    // If configured (non-empty), requires Authorization: Bearer <token> for group mutations.
+    @Value("${specpulse.auth.token:}")
+    private String authToken;
+
+    private boolean isGroupAuthorized(String authorization) {
+        if (authToken == null || authToken.isBlank()) {
+            return true; // Backward-compatible default.
+        }
+
+        if (authorization == null || !authorization.startsWith("Bearer ")) {
+            return false;
+        }
+
+        String token = authorization.substring("Bearer ".length()).trim();
+        return authToken.equals(token);
+    }
 
     @GetMapping
     @Operation(summary = "Получить все группы", description = "Возвращает иерархическую структуру всех групп")
@@ -53,7 +63,11 @@ public class ServiceGroupController {
     @PostMapping
     @Operation(summary = "Создать группу", description = "Создает новую группу сервисов")
     public ResponseEntity<ServiceGroupDTO> createGroup(
+            @RequestHeader(name = "Authorization", required = false) String authorization,
             @Valid @RequestBody CreateGroupRequest request) {
+        if (!isGroupAuthorized(authorization)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
         log.info("Creating group: {}", request.getName());
         ServiceGroupDTO created = groupService.createGroup(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
@@ -63,7 +77,11 @@ public class ServiceGroupController {
     @Operation(summary = "Обновить группу", description = "Обновляет существующую группу")
     public ResponseEntity<ServiceGroupDTO> updateGroup(
             @Parameter(description = "ID группы") @PathVariable Long id,
+            @RequestHeader(name = "Authorization", required = false) String authorization,
             @Valid @RequestBody UpdateGroupRequest request) {
+        if (!isGroupAuthorized(authorization)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
         log.info("Updating group: {}", id);
         return ResponseEntity.ok(groupService.updateGroup(id, request));
     }
@@ -71,7 +89,11 @@ public class ServiceGroupController {
     @DeleteMapping("/{id}")
     @Operation(summary = "Удалить группу", description = "Удаляет группу (только если нет подгрупп)")
     public ResponseEntity<Void> deleteGroup(
-            @Parameter(description = "ID группы") @PathVariable Long id) {
+            @Parameter(description = "ID группы") @PathVariable Long id,
+            @RequestHeader(name = "Authorization", required = false) String authorization) {
+        if (!isGroupAuthorized(authorization)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
         log.info("Deleting group: {}", id);
         groupService.deleteGroup(id);
         return ResponseEntity.noContent().build();
@@ -81,7 +103,11 @@ public class ServiceGroupController {
     @Operation(summary = "Добавить сервисы в группу", description = "Добавляет указанные сервисы в группу")
     public ResponseEntity<ServiceGroupDTO> addServicesToGroup(
             @Parameter(description = "ID группы") @PathVariable Long id,
+            @RequestHeader(name = "Authorization", required = false) String authorization,
             @Parameter(description = "Список ID сервисов") @RequestBody List<Long> serviceIds) {
+        if (!isGroupAuthorized(authorization)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
         log.info("Adding {} services to group: {}", serviceIds.size(), id);
         return ResponseEntity.ok(groupService.addServicesToGroup(id, serviceIds));
     }
@@ -90,7 +116,11 @@ public class ServiceGroupController {
     @Operation(summary = "Удалить сервис из группы", description = "Удаляет сервис из группы")
     public ResponseEntity<Void> removeServiceFromGroup(
             @Parameter(description = "ID группы") @PathVariable Long id,
-            @Parameter(description = "ID сервиса") @PathVariable Long serviceId) {
+            @Parameter(description = "ID сервиса") @PathVariable Long serviceId,
+            @RequestHeader(name = "Authorization", required = false) String authorization) {
+        if (!isGroupAuthorized(authorization)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
         log.info("Removing service {} from group {}", serviceId, id);
         groupService.removeServiceFromGroup(id, serviceId);
         return ResponseEntity.noContent().build();

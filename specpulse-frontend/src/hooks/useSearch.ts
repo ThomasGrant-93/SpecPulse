@@ -1,4 +1,4 @@
-import {useCallback, useRef, useState} from 'react';
+import { useCallback, useRef, useState } from 'react';
 
 interface UseSearchOptions {
     debounceMs?: number;
@@ -14,7 +14,7 @@ interface UseSearchReturn {
 }
 
 export function useSearch(options: UseSearchOptions = {}): UseSearchReturn {
-    const {debounceMs = 300, trim = true} = options;
+    const { debounceMs = 300, trim = true } = options;
     const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const [query, setQueryState] = useState('');

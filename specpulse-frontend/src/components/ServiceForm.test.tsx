@@ -1,10 +1,10 @@
-import {beforeEach, describe, expect, it, vi} from 'vitest';
-import {fireEvent, render, screen, waitFor} from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import {QueryClientProvider} from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
 import ServiceForm from './ServiceForm';
-import type {Service} from '@/types';
-import {testQueryClient} from '@/test/setup';
+import type { Service } from '@/types';
+import { testQueryClient } from '@/test/setup'; // Mock fetch globally
 
 // Mock fetch globally
 const mockFetch = vi.fn();
@@ -67,7 +67,7 @@ describe('ServiceForm', () => {
 
             expect(screen.getByPlaceholderText('my-service')).toBeInTheDocument();
             expect(
-                    screen.getByPlaceholderText('https://api.example.com/openapi.json')
+                screen.getByPlaceholderText('https://api.example.com/openapi.json')
             ).toBeInTheDocument();
         });
     });
@@ -79,33 +79,33 @@ describe('ServiceForm', () => {
         it('should have validation button disabled when URL is empty', () => {
             renderServiceForm();
 
-            const validateButton = screen.getByRole('button', {name: /Validate/i});
+            const validateButton = screen.getByRole('button', { name: /Validate/i });
             expect(validateButton).toBeDisabled();
         });
 
         it('should validate OpenAPI spec before submit for new service', async () => {
             // Mock successful validation - called twice (once for validate button, once for submit)
             mockFetch
-                    .mockResolvedValueOnce({
-                        ok: true,
-                        json: async () => ({valid: true, errors: []}),
-                    })
-                    .mockResolvedValueOnce({
-                        ok: true,
-                        json: async () => ({valid: true, errors: []}),
-                    });
+                .mockResolvedValueOnce({
+                    ok: true,
+                    json: async () => ({ valid: true, errors: [] }),
+                })
+                .mockResolvedValueOnce({
+                    ok: true,
+                    json: async () => ({ valid: true, errors: [] }),
+                });
 
             renderServiceForm();
 
             const user = userEvent.setup();
             await user.type(screen.getByLabelText(/Name/i), 'Test Service');
             await user.type(
-                    screen.getByLabelText(/OpenAPI URL/i),
-                    'https://api.example.com/openapi.json'
+                screen.getByLabelText(/OpenAPI URL/i),
+                'https://api.example.com/openapi.json'
             );
 
             // Click validate button
-            const validateButton = screen.getByRole('button', {name: /Validate/i});
+            const validateButton = screen.getByRole('button', { name: /Validate/i });
             await user.click(validateButton);
 
             await waitFor(() => {
@@ -113,7 +113,7 @@ describe('ServiceForm', () => {
             });
 
             // Submit form
-            const submitButton = screen.getByRole('button', {name: /Save/i});
+            const submitButton = screen.getByRole('button', { name: /Save/i });
             await user.click(submitButton);
 
             await waitFor(() => {
@@ -141,11 +141,11 @@ describe('ServiceForm', () => {
             const user = userEvent.setup();
             await user.type(screen.getByLabelText(/Name/i), 'Test Service');
             await user.type(
-                    screen.getByLabelText(/OpenAPI URL/i),
-                    'https://api.example.com/openapi.json'
+                screen.getByLabelText(/OpenAPI URL/i),
+                'https://api.example.com/openapi.json'
             );
 
-            const validateButton = screen.getByRole('button', {name: /Validate/i});
+            const validateButton = screen.getByRole('button', { name: /Validate/i });
             await user.click(validateButton);
 
             await waitFor(() => {
@@ -174,7 +174,7 @@ describe('ServiceForm', () => {
             await user.type(screen.getByLabelText(/Name/i), 'Updated Service');
 
             // Submit should work without validation
-            const submitButton = screen.getByRole('button', {name: /Save Changes/i});
+            const submitButton = screen.getByRole('button', { name: /Save Changes/i });
             await user.click(submitButton);
 
             await waitFor(() => {
@@ -205,7 +205,7 @@ describe('ServiceForm', () => {
 
             expect(screen.getByLabelText(/Name/i)).toHaveValue('My Service');
             expect(screen.getByLabelText(/OpenAPI URL/i)).toHaveValue(
-                    'https://api.myservice.com/openapi.json'
+                'https://api.myservice.com/openapi.json'
             );
             expect(screen.getByLabelText(/Description/i)).toHaveValue('My description');
             expect(screen.getByLabelText(/Enabled/i)).not.toBeChecked();
@@ -220,7 +220,7 @@ describe('ServiceForm', () => {
 
             // Validation state should be reset when typing
             const nameInput = screen.getByLabelText(/Name/i);
-            fireEvent.change(nameInput, {target: {value: 'Test 2'}});
+            fireEvent.change(nameInput, { target: { value: 'Test 2' } });
 
             // Success message should disappear
             expect(screen.queryByText(/OpenAPI specification is valid/i)).not.toBeInTheDocument();
@@ -245,7 +245,7 @@ describe('ServiceForm', () => {
         it('should call onCancel when cancel button is clicked', async () => {
             renderServiceForm();
 
-            const cancelButton = screen.getByRole('button', {name: /Cancel/i});
+            const cancelButton = screen.getByRole('button', { name: /Cancel/i });
             const user = userEvent.setup();
             await user.click(cancelButton);
 
@@ -256,7 +256,7 @@ describe('ServiceForm', () => {
             // Mock validation called on submit
             mockFetch.mockResolvedValueOnce({
                 ok: true,
-                json: async () => ({valid: true, errors: []}),
+                json: async () => ({ valid: true, errors: [] }),
             });
 
             renderServiceForm();
@@ -264,12 +264,12 @@ describe('ServiceForm', () => {
             const user = userEvent.setup();
             await user.type(screen.getByLabelText(/Name/i), 'Test Service');
             await user.type(
-                    screen.getByLabelText(/OpenAPI URL/i),
-                    'https://api.example.com/openapi.json'
+                screen.getByLabelText(/OpenAPI URL/i),
+                'https://api.example.com/openapi.json'
             );
             await user.type(screen.getByLabelText(/Description/i), 'Test description');
 
-            const submitButton = screen.getByRole('button', {name: /Save/i});
+            const submitButton = screen.getByRole('button', { name: /Save/i });
             await user.click(submitButton);
 
             await waitFor(() => {
@@ -286,17 +286,17 @@ describe('ServiceForm', () => {
         it('should disable buttons during validation', async () => {
             // Mock a slow validation
             mockFetch.mockImplementationOnce(
-                    () =>
-                            new Promise((resolve) =>
-                                    setTimeout(
-                                            () =>
-                                                    resolve({
-                                                        ok: true,
-                                                        json: async () => ({valid: true, errors: []}),
-                                                    }),
-                                            100
-                                    )
-                            )
+                () =>
+                    new Promise((resolve) =>
+                        setTimeout(
+                            () =>
+                                resolve({
+                                    ok: true,
+                                    json: async () => ({ valid: true, errors: [] }),
+                                }),
+                            100
+                        )
+                    )
             );
 
             renderServiceForm();
@@ -305,12 +305,12 @@ describe('ServiceForm', () => {
             await user.type(screen.getByLabelText(/Name/i), 'Test');
             await user.type(screen.getByLabelText(/OpenAPI URL/i), 'https://api.example.com');
 
-            const validateButton = screen.getByRole('button', {name: /Validate/i});
+            const validateButton = screen.getByRole('button', { name: /Validate/i });
             await user.click(validateButton);
 
             // Buttons should be disabled during validation
             expect(validateButton).toBeDisabled();
-            expect(screen.getByRole('button', {name: /Validating\.\.\./i})).toBeDisabled();
+            expect(screen.getByRole('button', { name: /Validating\.\.\./i })).toBeDisabled();
         });
     });
 
@@ -335,7 +335,7 @@ describe('ServiceForm', () => {
         it('should show validation errors in alert region', async () => {
             mockFetch.mockResolvedValueOnce({
                 ok: true,
-                json: async () => ({valid: false, errors: ['Error 1']}),
+                json: async () => ({ valid: false, errors: ['Error 1'] }),
             });
 
             renderServiceForm();
@@ -344,7 +344,7 @@ describe('ServiceForm', () => {
             await user.type(screen.getByLabelText(/Name/i), 'Test');
             await user.type(screen.getByLabelText(/OpenAPI URL/i), 'https://api.example.com');
 
-            const validateButton = screen.getByRole('button', {name: /Validate/i});
+            const validateButton = screen.getByRole('button', { name: /Validate/i });
             await user.click(validateButton);
 
             await waitFor(() => {
@@ -355,7 +355,7 @@ describe('ServiceForm', () => {
         it('should show success message with proper styling', async () => {
             mockFetch.mockResolvedValueOnce({
                 ok: true,
-                json: async () => ({valid: true, errors: []}),
+                json: async () => ({ valid: true, errors: [] }),
             });
 
             renderServiceForm();
@@ -364,7 +364,7 @@ describe('ServiceForm', () => {
             await user.type(screen.getByLabelText(/Name/i), 'Test');
             await user.type(screen.getByLabelText(/OpenAPI URL/i), 'https://api.example.com');
 
-            const validateButton = screen.getByRole('button', {name: /Validate/i});
+            const validateButton = screen.getByRole('button', { name: /Validate/i });
             await user.click(validateButton);
 
             await waitFor(() => {
@@ -383,7 +383,7 @@ describe('ServiceForm', () => {
             await user.type(screen.getByLabelText(/Name/i), 'Test');
             await user.type(screen.getByLabelText(/OpenAPI URL/i), 'https://api.example.com');
 
-            const validateButton = screen.getByRole('button', {name: /Validate/i});
+            const validateButton = screen.getByRole('button', { name: /Validate/i });
             await user.click(validateButton);
 
             await waitFor(() => {
@@ -403,7 +403,7 @@ describe('ServiceForm', () => {
             await user.type(screen.getByLabelText(/Name/i), 'Test');
             await user.type(screen.getByLabelText(/OpenAPI URL/i), 'https://api.example.com');
 
-            const validateButton = screen.getByRole('button', {name: /Validate/i});
+            const validateButton = screen.getByRole('button', { name: /Validate/i });
             await user.click(validateButton);
 
             await waitFor(() => {

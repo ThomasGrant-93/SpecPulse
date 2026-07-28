@@ -286,4 +286,31 @@ class OpenApiParserTest {
         assertThat(result.contentHash()).hasSize(64); // SHA-256 hex length
         assertThat(result.contentHash()).matches("[a-f0-9]+");
     }
+
+    @Test
+    @DisplayName("Should not fail when spec contains external $ref targets")
+    void shouldNotResolveExternalRefsDuringParsing() {
+        // Given: external $ref points to a port we don't run during tests.
+        // If parsing attempts to fully resolve remote refs, it should fail.
+        String spec = """
+                {
+                    "openapi": "3.0.0",
+                    "info": {"title": "Test API", "version": "1.0.0"},
+                    "paths": {},
+                    "components": {
+                        "schemas": {
+                            "External": {"$ref": "http://localhost:9/schema.json"}
+                        }
+                    }
+                }
+                """;
+
+        // When
+        OpenApiParser.ParseResult result = parser.parse(spec);
+
+        // Then
+        assertThat(result.success()).isTrue();
+        assertThat(result.errorMessage()).isNull();
+        assertThat(result.contentHash()).isNotNull();
+    }
 }

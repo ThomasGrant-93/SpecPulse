@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.TaskScheduler;
+import org.springframework.scheduling.support.CronExpression;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -23,8 +24,6 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.List;
-
-import org.springframework.scheduling.support.CronExpression;
 
 /**
  * Scheduled service for pulling OpenAPI specifications
@@ -40,28 +39,23 @@ public class SpecPullScheduler {
     private final SpecDiffPort diffPort;
     private final PullExecutionStorePort executionStore;
     private final AuditLogPort auditLogPort;
-
+    private final Object scheduleLock = new Object();
     @Autowired(required = false)
     private TaskScheduler taskScheduler;
-
     @Autowired(required = false)
     private ApplicationSettingService settingService;
-
     @Value("${specpulse.scheduler.pull-interval-seconds:300}")
     private long defaultPullIntervalSeconds;
-
     @Value("${specpulse.scheduler.disabled-check-interval-seconds:60}")
     private long disabledCheckIntervalSeconds;
-
-    private final Object scheduleLock = new Object();
     private volatile boolean schedulingStarted = false;
 
     public SpecPullScheduler(RegistryService registryService,
-                              OpenApiSpecPort openApiClient,
-                              SpecVersionPullPort versionPullPort,
-                              SpecDiffPort diffPort,
-                              PullExecutionStorePort executionStore,
-                              AuditLogPort auditLogPort) {
+                             OpenApiSpecPort openApiClient,
+                             SpecVersionPullPort versionPullPort,
+                             SpecDiffPort diffPort,
+                             PullExecutionStorePort executionStore,
+                             AuditLogPort auditLogPort) {
         this.registryService = registryService;
         this.openApiClient = openApiClient;
         this.versionPullPort = versionPullPort;

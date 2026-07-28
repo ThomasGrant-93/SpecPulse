@@ -1,13 +1,14 @@
 package com.specpulse.diff;
 
+import com.specpulse.exception.ResourceNotFoundException;
 import com.specpulse.version.VersionService;
 import org.openapitools.openapidiff.core.OpenApiCompare;
 import org.openapitools.openapidiff.core.model.ChangedOpenApi;
 import org.openapitools.openapidiff.core.model.DiffResult;
 import org.openapitools.openapidiff.core.output.ConsoleRender;
-import org.springframework.beans.factory.annotation.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -116,7 +117,7 @@ public class DiffService implements SpecDiffPort {
 
     public SpecDiffDTO getDiffById(Long id) {
         SpecDiffEntity entity = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Diff not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Diff", id));
         return SpecDiffDTO.fromEntity(entity);
     }
 

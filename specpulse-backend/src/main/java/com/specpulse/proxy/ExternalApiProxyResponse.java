@@ -6,7 +6,7 @@ import java.util.Map;
 
 /**
  * Response from outbound proxy call.
- *
+ * <p>
  * Note: This is intentionally modeled to match what the frontend API tester expects.
  */
 public record ExternalApiProxyResponse(

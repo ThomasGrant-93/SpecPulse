@@ -1,4 +1,4 @@
-import axios, {AxiosError, AxiosResponse} from 'axios';
+import axios, { AxiosError, AxiosResponse } from 'axios';
 
 export interface TestRequest {
     url: string;
@@ -70,7 +70,7 @@ export const apiTester = {
                 status: axiosError.response?.status || 0,
                 statusText: axiosError.message,
                 headers: {},
-                body: axiosError.response?.data || {error: axiosError.message},
+                body: axiosError.response?.data || { error: axiosError.message },
                 duration,
                 error: axiosError.message,
             };

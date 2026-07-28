@@ -1,8 +1,8 @@
-import {describe, expect, it, vi} from 'vitest';
-import {fireEvent, render, screen} from '@testing-library/react';
-import {MemoryRouter} from 'react-router-dom';
+import { describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import ServiceList from './ServiceList';
-import type {Service} from '@/types';
+import type { Service } from '@/types';
 
 const mockServices: Service[] = [
     {
@@ -48,18 +48,18 @@ const renderServiceList = (services: Service[] = []) => {
     };
 
     const utils = render(
-            <MemoryRouter>
-                <ServiceList
-                        services={services}
-                        onDelete={mocks.onDelete}
-                        onPull={mocks.onPull}
-                        onEdit={mocks.onEdit}
-                        pullStatus={mocks.pullStatus}
-                />
-            </MemoryRouter>
+        <MemoryRouter>
+            <ServiceList
+                services={services}
+                onDelete={mocks.onDelete}
+                onPull={mocks.onPull}
+                onEdit={mocks.onEdit}
+                pullStatus={mocks.pullStatus}
+            />
+        </MemoryRouter>
     );
 
-    return {...utils, ...mocks};
+    return { ...utils, ...mocks };
 };
 
 describe('ServiceList', () => {
@@ -112,8 +112,8 @@ describe('ServiceList', () => {
         it('should have links to service detail pages', () => {
             renderServiceList(mockServices);
 
-            const link1 = screen.getByRole('link', {name: /Test Service 1/i});
-            const link2 = screen.getByRole('link', {name: /Test Service 2/i});
+            const link1 = screen.getByRole('link', { name: /Test Service 1/i });
+            const link2 = screen.getByRole('link', { name: /Test Service 2/i });
 
             expect(link1).toHaveAttribute('href', '/services/1');
             expect(link2).toHaveAttribute('href', '/services/2');
@@ -122,25 +122,25 @@ describe('ServiceList', () => {
 
     describe('Actions', () => {
         it('should call onEdit when edit button is clicked', () => {
-            const {onEdit} = renderServiceList(mockServices);
+            const { onEdit } = renderServiceList(mockServices);
 
-            const editButton = screen.getByRole('button', {name: /Edit service Test Service 1/i});
+            const editButton = screen.getByRole('button', { name: /Edit service Test Service 1/i });
             fireEvent.click(editButton);
 
             expect(onEdit).toHaveBeenCalledWith(mockServices[0]);
         });
 
         it('should call onPull when pull button is clicked', () => {
-            const {onPull} = renderServiceList(mockServices);
+            const { onPull } = renderServiceList(mockServices);
 
-            const pullButton = screen.getByRole('button', {name: /Pull service Test Service 1/i});
+            const pullButton = screen.getByRole('button', { name: /Pull service Test Service 1/i });
             fireEvent.click(pullButton);
 
             expect(onPull).toHaveBeenCalledWith(1);
         });
 
         it('should call onDelete when delete button is clicked', () => {
-            const {onDelete} = renderServiceList(mockServices);
+            const { onDelete } = renderServiceList(mockServices);
 
             const deleteButton = screen.getByRole('button', {
                 name: /Delete service Test Service 1/i,
@@ -153,25 +153,25 @@ describe('ServiceList', () => {
         it('should disable pull button when loading', () => {
             renderServiceList(mockServices);
 
-            const pullButton = screen.getByRole('button', {name: /Pull service Test Service 1/i});
+            const pullButton = screen.getByRole('button', { name: /Pull service Test Service 1/i });
             expect(pullButton).not.toBeDisabled();
         });
 
         it('should show pulling state when loading', () => {
-            const pullStatus = {1: 'loading' as const};
+            const pullStatus = { 1: 'loading' as const };
             renderServiceList(mockServices);
 
             // Re-render with loading status
             render(
-                    <MemoryRouter>
-                        <ServiceList
-                                services={mockServices}
-                                onDelete={vi.fn()}
-                                onPull={vi.fn()}
-                                onEdit={vi.fn()}
-                                pullStatus={pullStatus}
-                        />
-                    </MemoryRouter>
+                <MemoryRouter>
+                    <ServiceList
+                        services={mockServices}
+                        onDelete={vi.fn()}
+                        onPull={vi.fn()}
+                        onEdit={vi.fn()}
+                        pullStatus={pullStatus}
+                    />
+                </MemoryRouter>
             );
 
             const pullingButton = screen.getByText('Pulling...');
@@ -190,7 +190,7 @@ describe('ServiceList', () => {
         it('should have action group with aria-label', () => {
             renderServiceList(mockServices);
 
-            const actionGroup = screen.getByRole('group', {name: /Actions for Test Service 1/i});
+            const actionGroup = screen.getByRole('group', { name: /Actions for Test Service 1/i });
             expect(actionGroup).toBeInTheDocument();
         });
 
@@ -198,13 +198,13 @@ describe('ServiceList', () => {
             renderServiceList(mockServices);
 
             expect(
-                    screen.getByRole('button', {name: /Edit service Test Service 1/i})
+                screen.getByRole('button', { name: /Edit service Test Service 1/i })
             ).toBeInTheDocument();
             expect(
-                    screen.getByRole('button', {name: /Pull service Test Service 1/i})
+                screen.getByRole('button', { name: /Pull service Test Service 1/i })
             ).toBeInTheDocument();
             expect(
-                    screen.getByRole('button', {name: /Delete service Test Service 1/i})
+                screen.getByRole('button', { name: /Delete service Test Service 1/i })
             ).toBeInTheDocument();
         });
 
@@ -237,7 +237,7 @@ describe('ServiceList', () => {
             renderServiceList(longUrlService);
 
             const urlElement = screen.getByTitle(
-                    'https://very-long-api-url.example.com/v1/openapi.json'
+                'https://very-long-api-url.example.com/v1/openapi.json'
             );
             expect(urlElement).toBeInTheDocument();
         });

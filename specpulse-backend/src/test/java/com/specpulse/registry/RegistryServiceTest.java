@@ -1,8 +1,8 @@
 package com.specpulse.registry;
 
+import com.specpulse.client.OutboundUrlSecurity;
 import com.specpulse.exception.DuplicateResourceException;
 import com.specpulse.exception.ResourceNotFoundException;
-import com.specpulse.client.OutboundUrlSecurity;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,9 +16,8 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.lenient;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)

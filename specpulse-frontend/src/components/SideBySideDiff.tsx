@@ -1,4 +1,4 @@
-import {useMemo, useState} from 'react';
+import { useMemo, useState } from 'react';
 
 interface SideBySideDiffProps {
     oldSpec: string;
@@ -14,7 +14,7 @@ interface DiffLine {
     path?: string;
 }
 
-export default function SideBySideDiff({oldSpec, newSpec}: SideBySideDiffProps) {
+export default function SideBySideDiff({ oldSpec, newSpec }: SideBySideDiffProps) {
     const [collapsedSections, setCollapsedSections] = useState<Set<number>>(new Set());
 
     // Parse diff into lines
@@ -32,7 +32,7 @@ export default function SideBySideDiff({oldSpec, newSpec}: SideBySideDiffProps) 
         diffLines.forEach((line, idx) => {
             if (line.type === 'section-header') {
                 if (currentSection.length > 0) {
-                    result.push({lines: currentSection, hasChanges, startIdx: sectionStartIdx});
+                    result.push({ lines: currentSection, hasChanges, startIdx: sectionStartIdx });
                 }
                 currentSection = [line];
                 hasChanges = false;
@@ -46,7 +46,7 @@ export default function SideBySideDiff({oldSpec, newSpec}: SideBySideDiffProps) 
         });
 
         if (currentSection.length > 0) {
-            result.push({lines: currentSection, hasChanges, startIdx: sectionStartIdx});
+            result.push({ lines: currentSection, hasChanges, startIdx: sectionStartIdx });
         }
 
         return result;
@@ -79,38 +79,38 @@ export default function SideBySideDiff({oldSpec, newSpec}: SideBySideDiffProps) 
     };
 
     return (
-            <div className="border rounded-lg overflow-hidden">
-                {/* Toolbar */}
-                <div className="bg-gray-50 border-b px-4 py-2 flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <span className="text-sm font-medium text-gray-700">Side-by-Side Diff</span>
-                        <div className="flex items-center gap-2">
-                            <span className="w-3 h-3 bg-red-100 border border-red-300 rounded"></span>
-                            <span className="text-xs text-gray-600">Removed</span>
-                            <span className="w-3 h-3 bg-green-100 border border-green-300 rounded"></span>
-                            <span className="text-xs text-gray-600">Added</span>
-                        </div>
-                    </div>
-                    <div className="flex gap-2">
-                        <button
-                                onClick={collapseAll}
-                                className="text-xs px-2 py-1 bg-white border border-gray-300 rounded hover:bg-gray-50"
-                        >
-                            Collapse Unchanged
-                        </button>
-                        <button
-                                onClick={expandAll}
-                                className="text-xs px-2 py-1 bg-white border border-gray-300 rounded hover:bg-gray-50"
-                        >
-                            Expand All
-                        </button>
+        <div className="border rounded-lg overflow-hidden">
+            {/* Toolbar */}
+            <div className="bg-gray-50 border-b px-4 py-2 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                    <span className="text-sm font-medium text-gray-700">Side-by-Side Diff</span>
+                    <div className="flex items-center gap-2">
+                        <span className="w-3 h-3 bg-red-100 border border-red-300 rounded"></span>
+                        <span className="text-xs text-gray-600">Removed</span>
+                        <span className="w-3 h-3 bg-green-100 border border-green-300 rounded"></span>
+                        <span className="text-xs text-gray-600">Added</span>
                     </div>
                 </div>
+                <div className="flex gap-2">
+                    <button
+                        onClick={collapseAll}
+                        className="text-xs px-2 py-1 bg-white border border-gray-300 rounded hover:bg-gray-50"
+                    >
+                        Collapse Unchanged
+                    </button>
+                    <button
+                        onClick={expandAll}
+                        className="text-xs px-2 py-1 bg-white border border-gray-300 rounded hover:bg-gray-50"
+                    >
+                        Expand All
+                    </button>
+                </div>
+            </div>
 
-                {/* Diff Content */}
-                <div className="overflow-x-auto">
-                    <table className="w-full text-sm font-mono">
-                        <thead>
+            {/* Diff Content */}
+            <div className="overflow-x-auto">
+                <table className="w-full text-sm font-mono">
+                    <thead>
                         <tr className="bg-gray-50 border-b">
                             <th className="w-12 text-right pr-2 py-2 text-gray-500 font-normal border-r">
                                 Old
@@ -121,163 +121,163 @@ export default function SideBySideDiff({oldSpec, newSpec}: SideBySideDiffProps) 
                             <th className="w-1/2 text-left pl-2 py-2 text-gray-700">Before</th>
                             <th className="w-1/2 text-left pl-2 py-2 text-gray-700">After</th>
                         </tr>
-                        </thead>
-                        <tbody>
+                    </thead>
+                    <tbody>
                         {sections.map((section, sectionIdx) => {
                             const isCollapsed = collapsedSections.has(sectionIdx);
 
                             if (isCollapsed && !section.hasChanges) {
                                 return (
-                                        <tr
-                                                key={sectionIdx}
-                                                onClick={() => toggleCollapse(sectionIdx)}
-                                                className="cursor-pointer hover:bg-gray-50"
+                                    <tr
+                                        key={sectionIdx}
+                                        onClick={() => toggleCollapse(sectionIdx)}
+                                        className="cursor-pointer hover:bg-gray-50"
+                                    >
+                                        <td
+                                            colSpan={4}
+                                            className="py-2 px-4 text-center text-gray-500"
                                         >
-                                            <td
-                                                    colSpan={4}
-                                                    className="py-2 px-4 text-center text-gray-500"
-                                            >
-                                                <div className="flex items-center justify-center gap-2">
-                                                    <svg
-                                                            className="w-4 h-4"
-                                                            fill="none"
-                                                            stroke="currentColor"
-                                                            viewBox="0 0 24 24"
-                                                    >
-                                                        <path
-                                                                strokeLinecap="round"
-                                                                strokeLinejoin="round"
-                                                                strokeWidth={2}
-                                                                d="M19 9l-7 7-7-7"
-                                                        />
-                                                    </svg>
-                                                    <span>{section.lines.length} unchanged lines</span>
-                                                    <span className="text-xs bg-gray-200 px-2 py-0.5 rounded">
+                                            <div className="flex items-center justify-center gap-2">
+                                                <svg
+                                                    className="w-4 h-4"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    viewBox="0 0 24 24"
+                                                >
+                                                    <path
+                                                        strokeLinecap="round"
+                                                        strokeLinejoin="round"
+                                                        strokeWidth={2}
+                                                        d="M19 9l-7 7-7-7"
+                                                    />
+                                                </svg>
+                                                <span>{section.lines.length} unchanged lines</span>
+                                                <span className="text-xs bg-gray-200 px-2 py-0.5 rounded">
                                                     Lines {section.lines[0]?.oldLineNumber}–
-                                                        {
-                                                            section.lines[section.lines.length - 1]
-                                                                    ?.oldLineNumber
-                                                        }
+                                                    {
+                                                        section.lines[section.lines.length - 1]
+                                                            ?.oldLineNumber
+                                                    }
                                                 </span>
-                                                </div>
-                                            </td>
-                                        </tr>
+                                            </div>
+                                        </td>
+                                    </tr>
                                 );
                             }
 
                             return section.lines.map((line, lineIdx) => {
                                 if (line.type === 'section-header') {
                                     return (
-                                            <tr
-                                                    key={`${sectionIdx}-${lineIdx}`}
-                                                    className="bg-gray-100"
+                                        <tr
+                                            key={`${sectionIdx}-${lineIdx}`}
+                                            className="bg-gray-100"
+                                        >
+                                            <td
+                                                colSpan={4}
+                                                className="py-2 px-4 font-semibold text-gray-700 border-y"
                                             >
-                                                <td
-                                                        colSpan={4}
-                                                        className="py-2 px-4 font-semibold text-gray-700 border-y"
-                                                >
-                                                    <div className="flex items-center gap-2">
-                                                        {section.hasChanges && (
-                                                                <button
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            toggleCollapse(sectionIdx);
-                                                                        }}
-                                                                        className="text-gray-400 hover:text-gray-600"
-                                                                >
-                                                                    <svg
-                                                                            className="w-4 h-4"
-                                                                            fill="none"
-                                                                            stroke="currentColor"
-                                                                            viewBox="0 0 24 24"
-                                                                    >
-                                                                        <path
-                                                                                strokeLinecap="round"
-                                                                                strokeLinejoin="round"
-                                                                                strokeWidth={2}
-                                                                                d={
-                                                                                    isCollapsed
-                                                                                            ? 'M19 9l-7 7-7-7'
-                                                                                            : 'M9 5l7 7-7 7'
-                                                                                }
-                                                                        />
-                                                                    </svg>
-                                                                </button>
-                                                        )}
-                                                        <span className="text-blue-600">
+                                                <div className="flex items-center gap-2">
+                                                    {section.hasChanges && (
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                toggleCollapse(sectionIdx);
+                                                            }}
+                                                            className="text-gray-400 hover:text-gray-600"
+                                                        >
+                                                            <svg
+                                                                className="w-4 h-4"
+                                                                fill="none"
+                                                                stroke="currentColor"
+                                                                viewBox="0 0 24 24"
+                                                            >
+                                                                <path
+                                                                    strokeLinecap="round"
+                                                                    strokeLinejoin="round"
+                                                                    strokeWidth={2}
+                                                                    d={
+                                                                        isCollapsed
+                                                                            ? 'M19 9l-7 7-7-7'
+                                                                            : 'M9 5l7 7-7 7'
+                                                                    }
+                                                                />
+                                                            </svg>
+                                                        </button>
+                                                    )}
+                                                    <span className="text-blue-600">
                                                         {line.path}
                                                     </span>
-                                                    </div>
-                                                </td>
-                                            </tr>
+                                                </div>
+                                            </td>
+                                        </tr>
                                     );
                                 }
 
                                 return (
-                                        <tr
-                                                key={`${sectionIdx}-${lineIdx}`}
-                                                className={`${
-                                                        line.type === 'removed'
-                                                                ? 'bg-red-50'
-                                                                : line.type === 'added'
-                                                                        ? 'bg-green-50'
-                                                                        : 'bg-white'
-                                                } hover:bg-opacity-75`}
-                                        >
-                                            <td className="text-right pr-2 py-1 text-gray-400 border-r select-none">
-                                                {line.oldLineNumber || ''}
-                                            </td>
-                                            <td className="text-right pr-2 py-1 text-gray-400 border-r select-none">
-                                                {line.newLineNumber || ''}
-                                            </td>
-                                            <td className="pl-2 py-1 whitespace-pre-wrap break-all border-r">
-                                                {line.type === 'removed' && (
-                                                        <span className="text-red-700">
+                                    <tr
+                                        key={`${sectionIdx}-${lineIdx}`}
+                                        className={`${
+                                            line.type === 'removed'
+                                                ? 'bg-red-50'
+                                                : line.type === 'added'
+                                                  ? 'bg-green-50'
+                                                  : 'bg-white'
+                                        } hover:bg-opacity-75`}
+                                    >
+                                        <td className="text-right pr-2 py-1 text-gray-400 border-r select-none">
+                                            {line.oldLineNumber || ''}
+                                        </td>
+                                        <td className="text-right pr-2 py-1 text-gray-400 border-r select-none">
+                                            {line.newLineNumber || ''}
+                                        </td>
+                                        <td className="pl-2 py-1 whitespace-pre-wrap break-all border-r">
+                                            {line.type === 'removed' && (
+                                                <span className="text-red-700">
                                                     <span className="text-red-400 mr-2">−</span>
-                                                            {line.oldContent}
+                                                    {line.oldContent}
                                                 </span>
-                                                )}
-                                                {line.type === 'unchanged' && (
-                                                        <span className="text-gray-700">
+                                            )}
+                                            {line.type === 'unchanged' && (
+                                                <span className="text-gray-700">
                                                     <span className="text-gray-300 mr-2"> </span>
-                                                            {line.oldContent}
+                                                    {line.oldContent}
                                                 </span>
-                                                )}
-                                                {line.type === 'added' && (
-                                                        <span className="text-gray-400 italic">
+                                            )}
+                                            {line.type === 'added' && (
+                                                <span className="text-gray-400 italic">
                                                     <span className="mr-2"> </span>
-                                                            {line.oldContent}
+                                                    {line.oldContent}
                                                 </span>
-                                                )}
-                                            </td>
-                                            <td className="pl-2 py-1 whitespace-pre-wrap break-all">
-                                                {line.type === 'added' && (
-                                                        <span className="text-green-700">
+                                            )}
+                                        </td>
+                                        <td className="pl-2 py-1 whitespace-pre-wrap break-all">
+                                            {line.type === 'added' && (
+                                                <span className="text-green-700">
                                                     <span className="text-green-400 mr-2">+</span>
-                                                            {line.newContent}
+                                                    {line.newContent}
                                                 </span>
-                                                )}
-                                                {line.type === 'unchanged' && (
-                                                        <span className="text-gray-700">
+                                            )}
+                                            {line.type === 'unchanged' && (
+                                                <span className="text-gray-700">
                                                     <span className="text-gray-300 mr-2"> </span>
-                                                            {line.newContent}
+                                                    {line.newContent}
                                                 </span>
-                                                )}
-                                                {line.type === 'removed' && (
-                                                        <span className="text-gray-400 italic">
+                                            )}
+                                            {line.type === 'removed' && (
+                                                <span className="text-gray-400 italic">
                                                     <span className="mr-2"> </span>
-                                                            {line.newContent}
+                                                    {line.newContent}
                                                 </span>
-                                                )}
-                                            </td>
-                                        </tr>
+                                            )}
+                                        </td>
+                                    </tr>
                                 );
                             });
                         })}
-                        </tbody>
-                    </table>
-                </div>
+                    </tbody>
+                </table>
             </div>
+        </div>
     );
 }
 
