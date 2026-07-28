@@ -1,4 +1,4 @@
-import {useCallback, useState} from 'react';
+import { useCallback, useState } from 'react';
 
 interface UseLocalStorageOptions<T> {
     serializer?: (value: T) => string;
@@ -16,7 +16,7 @@ export function useLocalStorage<T>(
     initialValue: T | null = null,
     options: UseLocalStorageOptions<T> = {}
 ): UseLocalStorageReturn<T> {
-    const {serializer = JSON.stringify, deserializer = JSON.parse} = options;
+    const { serializer = JSON.stringify, deserializer = JSON.parse } = options;
 
     const [storedValue, setStoredValue] = useState<T | null>(() => {
         try {

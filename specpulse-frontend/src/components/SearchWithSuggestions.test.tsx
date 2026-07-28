@@ -1,10 +1,10 @@
-import {fireEvent, render, screen} from '@testing-library/react';
-import {beforeEach, afterEach, describe, expect, it, vi} from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import SearchWithSuggestions from './SearchWithSuggestions';
 
 /**
  * SearchWithSuggestions Component Tests
- * 
+ *
  * Note: Tests involving fetch/debounce are limited due to jsdom compatibility issues
  * with AbortController and async setTimeout. Core UI behavior is fully tested.
  */
@@ -21,12 +21,12 @@ describe('SearchWithSuggestions', () => {
 
     it('should render with placeholder', () => {
         render(
-                <SearchWithSuggestions
-                        value=""
-                        onChange={vi.fn()}
-                        onClear={vi.fn()}
-                        placeholder="Search..."
-                />
+            <SearchWithSuggestions
+                value=""
+                onChange={vi.fn()}
+                onClear={vi.fn()}
+                placeholder="Search..."
+            />
         );
 
         const input = screen.getByPlaceholderText('Search...');
@@ -34,25 +34,15 @@ describe('SearchWithSuggestions', () => {
     });
 
     it('should use default placeholder when not provided', () => {
-        render(
-                <SearchWithSuggestions
-                        value=""
-                        onChange={vi.fn()}
-                        onClear={vi.fn()}
-                />
-        );
+        render(<SearchWithSuggestions value="" onChange={vi.fn()} onClear={vi.fn()} />);
 
         const input = screen.getByPlaceholderText('Search services...');
         expect(input).toBeInTheDocument();
     });
 
     it('should have search icon', () => {
-        const {container} = render(
-                <SearchWithSuggestions
-                        value=""
-                        onChange={vi.fn()}
-                        onClear={vi.fn()}
-                />
+        const { container } = render(
+            <SearchWithSuggestions value="" onChange={vi.fn()} onClear={vi.fn()} />
         );
 
         // Search icon SVG should be present (decorative)
@@ -64,35 +54,23 @@ describe('SearchWithSuggestions', () => {
 
     it('should call onChange when typing', () => {
         const onChange = vi.fn();
-        render(
-                <SearchWithSuggestions
-                        value=""
-                        onChange={onChange}
-                        onClear={vi.fn()}
-                />
-        );
+        render(<SearchWithSuggestions value="" onChange={onChange} onClear={vi.fn()} />);
 
         const input = screen.getByPlaceholderText('Search services...');
-        fireEvent.change(input, {target: {value: 'test'}});
+        fireEvent.change(input, { target: { value: 'test' } });
 
         expect(onChange).toHaveBeenCalledWith('test');
     });
 
     it('should call onChange multiple times when typing multiple characters', () => {
         const onChange = vi.fn();
-        render(
-                <SearchWithSuggestions
-                        value=""
-                        onChange={onChange}
-                        onClear={vi.fn()}
-                />
-        );
+        render(<SearchWithSuggestions value="" onChange={onChange} onClear={vi.fn()} />);
 
         const input = screen.getByPlaceholderText('Search services...');
-        fireEvent.change(input, {target: {value: 't'}});
-        fireEvent.change(input, {target: {value: 'te'}});
-        fireEvent.change(input, {target: {value: 'tes'}});
-        fireEvent.change(input, {target: {value: 'test'}});
+        fireEvent.change(input, { target: { value: 't' } });
+        fireEvent.change(input, { target: { value: 'te' } });
+        fireEvent.change(input, { target: { value: 'tes' } });
+        fireEvent.change(input, { target: { value: 'test' } });
 
         expect(onChange).toHaveBeenCalledTimes(4);
         expect(onChange).toHaveBeenLastCalledWith('test');
@@ -101,38 +79,20 @@ describe('SearchWithSuggestions', () => {
     // ==================== Clear Button Tests ====================
 
     it('should show clear button when value is present', () => {
-        render(
-                <SearchWithSuggestions
-                        value="test"
-                        onChange={vi.fn()}
-                        onClear={vi.fn()}
-                />
-        );
+        render(<SearchWithSuggestions value="test" onChange={vi.fn()} onClear={vi.fn()} />);
 
         expect(screen.getByRole('button')).toBeInTheDocument();
     });
 
     it('should not show clear button when value is empty', () => {
-        render(
-                <SearchWithSuggestions
-                        value=""
-                        onChange={vi.fn()}
-                        onClear={vi.fn()}
-                />
-        );
+        render(<SearchWithSuggestions value="" onChange={vi.fn()} onClear={vi.fn()} />);
 
         expect(screen.queryByRole('button')).not.toBeInTheDocument();
     });
 
     it('should call onClear when clear button is clicked', () => {
         const onClear = vi.fn();
-        render(
-                <SearchWithSuggestions
-                        value="test"
-                        onChange={vi.fn()}
-                        onClear={onClear}
-                />
-        );
+        render(<SearchWithSuggestions value="test" onChange={vi.fn()} onClear={onClear} />);
 
         const clearButton = screen.getByRole('button');
         fireEvent.click(clearButton);
@@ -141,13 +101,7 @@ describe('SearchWithSuggestions', () => {
     });
 
     it('should have proper clear button accessibility', () => {
-        render(
-                <SearchWithSuggestions
-                        value="test"
-                        onChange={vi.fn()}
-                        onClear={vi.fn()}
-                />
-        );
+        render(<SearchWithSuggestions value="test" onChange={vi.fn()} onClear={vi.fn()} />);
 
         const clearButton = screen.getByRole('button');
         // Button should be clickable
@@ -157,13 +111,7 @@ describe('SearchWithSuggestions', () => {
     // ==================== Keyboard Navigation Tests ====================
 
     it('should prevent default browser find with Ctrl+F', () => {
-        render(
-                <SearchWithSuggestions
-                        value=""
-                        onChange={vi.fn()}
-                        onClear={vi.fn()}
-                />
-        );
+        render(<SearchWithSuggestions value="" onChange={vi.fn()} onClear={vi.fn()} />);
 
         const input = screen.getByPlaceholderText('Search services...');
         const event = fireEvent.keyDown(input, {
@@ -177,13 +125,7 @@ describe('SearchWithSuggestions', () => {
     });
 
     it('should prevent default browser find with Cmd+F', () => {
-        render(
-                <SearchWithSuggestions
-                        value=""
-                        onChange={vi.fn()}
-                        onClear={vi.fn()}
-                />
-        );
+        render(<SearchWithSuggestions value="" onChange={vi.fn()} onClear={vi.fn()} />);
 
         const input = screen.getByPlaceholderText('Search services...');
         const event = fireEvent.keyDown(input, {
@@ -197,13 +139,7 @@ describe('SearchWithSuggestions', () => {
     });
 
     it('should prevent default browser find with F3', () => {
-        render(
-                <SearchWithSuggestions
-                        value=""
-                        onChange={vi.fn()}
-                        onClear={vi.fn()}
-                />
-        );
+        render(<SearchWithSuggestions value="" onChange={vi.fn()} onClear={vi.fn()} />);
 
         const input = screen.getByPlaceholderText('Search services...');
         const event = fireEvent.keyDown(input, {
@@ -218,13 +154,7 @@ describe('SearchWithSuggestions', () => {
     // ==================== Input Styling Tests ====================
 
     it('should have proper input classes', () => {
-        render(
-                <SearchWithSuggestions
-                        value=""
-                        onChange={vi.fn()}
-                        onClear={vi.fn()}
-                />
-        );
+        render(<SearchWithSuggestions value="" onChange={vi.fn()} onClear={vi.fn()} />);
 
         const input = screen.getByPlaceholderText('Search services...');
         expect(input).toHaveClass('border');
@@ -234,12 +164,8 @@ describe('SearchWithSuggestions', () => {
     });
 
     it('should have proper container structure', () => {
-        const {container} = render(
-                <SearchWithSuggestions
-                        value=""
-                        onChange={vi.fn()}
-                        onClear={vi.fn()}
-                />
+        const { container } = render(
+            <SearchWithSuggestions value="" onChange={vi.fn()} onClear={vi.fn()} />
         );
 
         // Should have relative container
@@ -251,11 +177,7 @@ describe('SearchWithSuggestions', () => {
 
     it('should display value prop in input', () => {
         render(
-                <SearchWithSuggestions
-                        value="existing-value"
-                        onChange={vi.fn()}
-                        onClear={vi.fn()}
-                />
+            <SearchWithSuggestions value="existing-value" onChange={vi.fn()} onClear={vi.fn()} />
         );
 
         const input = screen.getByPlaceholderText('Search services...');
@@ -263,24 +185,14 @@ describe('SearchWithSuggestions', () => {
     });
 
     it('should update display when value prop changes', () => {
-        const {rerender} = render(
-                <SearchWithSuggestions
-                        value=""
-                        onChange={vi.fn()}
-                        onClear={vi.fn()}
-                />
+        const { rerender } = render(
+            <SearchWithSuggestions value="" onChange={vi.fn()} onClear={vi.fn()} />
         );
 
         let input = screen.getByPlaceholderText('Search services...');
         expect(input).toHaveValue('');
 
-        rerender(
-                <SearchWithSuggestions
-                        value="new-value"
-                        onChange={vi.fn()}
-                        onClear={vi.fn()}
-                />
-        );
+        rerender(<SearchWithSuggestions value="new-value" onChange={vi.fn()} onClear={vi.fn()} />);
 
         input = screen.getByPlaceholderText('Search services...');
         expect(input).toHaveValue('new-value');
@@ -290,32 +202,22 @@ describe('SearchWithSuggestions', () => {
 
     it('should work as controlled component with state', () => {
         let value = '';
-        const setValue = (newValue: string) => { value = newValue; };
+        const setValue = (newValue: string) => {
+            value = newValue;
+        };
         const onChangeMock = vi.fn().mockImplementation((v) => setValue(v));
 
-        render(
-                <SearchWithSuggestions
-                        value={value}
-                        onChange={onChangeMock}
-                        onClear={vi.fn()}
-                />
-        );
+        render(<SearchWithSuggestions value={value} onChange={onChangeMock} onClear={vi.fn()} />);
 
         const input = screen.getByPlaceholderText('Search services...');
-        fireEvent.change(input, {target: {value: 'test'}});
+        fireEvent.change(input, { target: { value: 'test' } });
 
         expect(onChangeMock).toHaveBeenCalledWith('test');
     });
 
     it('should clear value when clear button clicked', () => {
         const onClear = vi.fn();
-        render(
-                <SearchWithSuggestions
-                        value="test"
-                        onChange={vi.fn()}
-                        onClear={onClear}
-                />
-        );
+        render(<SearchWithSuggestions value="test" onChange={vi.fn()} onClear={onClear} />);
 
         const clearButton = screen.getByRole('button');
         fireEvent.click(clearButton);
@@ -326,26 +228,14 @@ describe('SearchWithSuggestions', () => {
     // ==================== Accessibility Tests ====================
 
     it('should have proper input type', () => {
-        render(
-                <SearchWithSuggestions
-                        value=""
-                        onChange={vi.fn()}
-                        onClear={vi.fn()}
-                />
-        );
+        render(<SearchWithSuggestions value="" onChange={vi.fn()} onClear={vi.fn()} />);
 
         const input = screen.getByPlaceholderText('Search services...');
         expect(input).toHaveAttribute('type', 'text');
     });
 
     it('should be focusable', () => {
-        render(
-                <SearchWithSuggestions
-                        value=""
-                        onChange={vi.fn()}
-                        onClear={vi.fn()}
-                />
-        );
+        render(<SearchWithSuggestions value="" onChange={vi.fn()} onClear={vi.fn()} />);
 
         const input = screen.getByPlaceholderText('Search services...');
         input.focus();
@@ -354,13 +244,7 @@ describe('SearchWithSuggestions', () => {
     });
 
     it('should have proper tab index', () => {
-        render(
-                <SearchWithSuggestions
-                        value=""
-                        onChange={vi.fn()}
-                        onClear={vi.fn()}
-                />
-        );
+        render(<SearchWithSuggestions value="" onChange={vi.fn()} onClear={vi.fn()} />);
 
         const input = screen.getByPlaceholderText('Search services...');
         expect(input).not.toHaveAttribute('tabIndex'); // defaults to 0

@@ -1,6 +1,6 @@
-import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import axios from 'axios';
-import {auditApi, diffsApi, pullApi, registryApi, versionsApi} from './api';
+import { auditApi, diffsApi, pullApi, registryApi, versionsApi } from './api';
 
 // Mock axios module
 vi.mock('axios', () => {
@@ -10,8 +10,8 @@ vi.mock('axios', () => {
         put: vi.fn(),
         delete: vi.fn(),
         interceptors: {
-            request: {use: vi.fn(), eject: vi.fn()},
-            response: {use: vi.fn(), eject: vi.fn()},
+            request: { use: vi.fn(), eject: vi.fn() },
+            response: { use: vi.fn(), eject: vi.fn() },
         },
     };
     return {
@@ -51,7 +51,7 @@ describe('API Service', () => {
                 },
             ];
 
-            mockedAxios.get.mockResolvedValueOnce({data: mockServices});
+            mockedAxios.get.mockResolvedValueOnce({ data: mockServices });
 
             const response = await registryApi.getAll();
 
@@ -69,7 +69,7 @@ describe('API Service', () => {
                 },
             ];
 
-            mockedAxios.get.mockResolvedValueOnce({data: mockServices});
+            mockedAxios.get.mockResolvedValueOnce({ data: mockServices });
 
             const response = await registryApi.getEnabled();
 
@@ -85,7 +85,7 @@ describe('API Service', () => {
                 enabled: true,
             };
 
-            mockedAxios.get.mockResolvedValueOnce({data: mockService});
+            mockedAxios.get.mockResolvedValueOnce({ data: mockService });
 
             const response = await registryApi.getById(1);
 
@@ -101,7 +101,7 @@ describe('API Service', () => {
                 enabled: true,
             };
 
-            mockedAxios.post.mockResolvedValueOnce({data: mockService});
+            mockedAxios.post.mockResolvedValueOnce({ data: mockService });
 
             const response = await registryApi.create({
                 name: 'New Service',
@@ -123,7 +123,7 @@ describe('API Service', () => {
                 enabled: false,
             };
 
-            mockedAxios.put.mockResolvedValueOnce({data: mockService});
+            mockedAxios.put.mockResolvedValueOnce({ data: mockService });
 
             const response = await registryApi.update(1, {
                 name: 'Updated Service',
@@ -138,7 +138,7 @@ describe('API Service', () => {
         });
 
         it('should delete service', async () => {
-            mockedAxios.delete.mockResolvedValueOnce({data: {}});
+            mockedAxios.delete.mockResolvedValueOnce({ data: {} });
 
             await registryApi.delete(1);
 
@@ -149,11 +149,11 @@ describe('API Service', () => {
     describe('Versions API', () => {
         it('should get versions by service id', async () => {
             const mockVersions = [
-                {id: 1, serviceId: 1, versionHash: 'abc123', pulledAt: '2024-01-01T00:00:00Z'},
-                {id: 2, serviceId: 1, versionHash: 'def456', pulledAt: '2024-01-02T00:00:00Z'},
+                { id: 1, serviceId: 1, versionHash: 'abc123', pulledAt: '2024-01-01T00:00:00Z' },
+                { id: 2, serviceId: 1, versionHash: 'def456', pulledAt: '2024-01-02T00:00:00Z' },
             ];
 
-            mockedAxios.get.mockResolvedValueOnce({data: mockVersions});
+            mockedAxios.get.mockResolvedValueOnce({ data: mockVersions });
 
             const response = await versionsApi.getByService(1);
 
@@ -169,7 +169,7 @@ describe('API Service', () => {
                 pulledAt: '2024-01-02T00:00:00Z',
             };
 
-            mockedAxios.get.mockResolvedValueOnce({data: mockVersion});
+            mockedAxios.get.mockResolvedValueOnce({ data: mockVersion });
 
             const response = await versionsApi.getLatest(1);
 
@@ -185,7 +185,7 @@ describe('API Service', () => {
                 pulledAt: '2024-01-01T00:00:00Z',
             };
 
-            mockedAxios.get.mockResolvedValueOnce({data: mockVersion});
+            mockedAxios.get.mockResolvedValueOnce({ data: mockVersion });
 
             const response = await versionsApi.getById(1);
 
@@ -209,7 +209,7 @@ describe('API Service', () => {
                 },
             ];
 
-            mockedAxios.get.mockResolvedValueOnce({data: mockDiffs});
+            mockedAxios.get.mockResolvedValueOnce({ data: mockDiffs });
 
             const response = await diffsApi.getByService(1);
 
@@ -229,7 +229,7 @@ describe('API Service', () => {
                 createdAt: '2024-01-02T00:00:00Z',
             };
 
-            mockedAxios.get.mockResolvedValueOnce({data: mockDiff});
+            mockedAxios.get.mockResolvedValueOnce({ data: mockDiff });
 
             const response = await diffsApi.getById(1);
 
@@ -244,7 +244,7 @@ describe('API Service', () => {
                 diffContent: 'diff content',
             };
 
-            mockedAxios.post.mockResolvedValueOnce({data: mockDiff});
+            mockedAxios.post.mockResolvedValueOnce({ data: mockDiff });
 
             const response = await diffsApi.compare('old spec', 'new spec');
 
@@ -267,7 +267,7 @@ describe('API Service', () => {
                 },
             ];
 
-            mockedAxios.get.mockResolvedValueOnce({data: mockLogs});
+            mockedAxios.get.mockResolvedValueOnce({ data: mockLogs });
 
             const response = await auditApi.getByService(1);
 
@@ -277,10 +277,10 @@ describe('API Service', () => {
 
         it('should get recent audit logs with default limit', async () => {
             const mockLogs = [
-                {id: 1, eventType: 'SERVICE_CREATED', createdAt: '2024-01-01T00:00:00Z'},
+                { id: 1, eventType: 'SERVICE_CREATED', createdAt: '2024-01-01T00:00:00Z' },
             ];
 
-            mockedAxios.get.mockResolvedValueOnce({data: mockLogs});
+            mockedAxios.get.mockResolvedValueOnce({ data: mockLogs });
 
             const response = await auditApi.getRecent();
 
@@ -290,10 +290,10 @@ describe('API Service', () => {
 
         it('should get recent audit logs with custom limit', async () => {
             const mockLogs = [
-                {id: 1, eventType: 'SERVICE_CREATED', createdAt: '2024-01-01T00:00:00Z'},
+                { id: 1, eventType: 'SERVICE_CREATED', createdAt: '2024-01-01T00:00:00Z' },
             ];
 
-            mockedAxios.get.mockResolvedValueOnce({data: mockLogs});
+            mockedAxios.get.mockResolvedValueOnce({ data: mockLogs });
 
             const response = await auditApi.getRecent(10);
 
@@ -312,7 +312,7 @@ describe('API Service', () => {
                 versionHash: 'abc123',
             };
 
-            mockedAxios.post.mockResolvedValueOnce({data: mockResult});
+            mockedAxios.post.mockResolvedValueOnce({ data: mockResult });
 
             const response = await pullApi.triggerService(1);
 
@@ -327,7 +327,7 @@ describe('API Service', () => {
                 results: [],
             };
 
-            mockedAxios.post.mockResolvedValueOnce({data: mockResult});
+            mockedAxios.post.mockResolvedValueOnce({ data: mockResult });
 
             const response = await pullApi.triggerAll();
 

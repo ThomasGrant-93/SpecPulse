@@ -1,4 +1,4 @@
-import {useCallback, useEffect, useState} from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 interface UseDebounceOptions {
     delay: number;
@@ -12,9 +12,9 @@ interface UseDebounceReturn<T> {
 
 export function useDebounce<T>(
     value: T,
-    options: UseDebounceOptions = {delay: 300}
+    options: UseDebounceOptions = { delay: 300 }
 ): UseDebounceReturn<T> {
-    const {delay} = options;
+    const { delay } = options;
     const [debouncedValue, setDebouncedValue] = useState<T>(value);
     const [isDebouncing, setIsDebouncing] = useState(false);
 

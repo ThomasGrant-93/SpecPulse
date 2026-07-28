@@ -1,4 +1,4 @@
-import {ReactNode, useEffect, useRef} from 'react';
+import { ReactNode, useEffect, useRef } from 'react';
 
 interface ModalProps {
     isOpen: boolean;
@@ -17,14 +17,7 @@ interface ModalProps {
  * - Proper ARIA attributes
  * - Prevents body scroll when open
  */
-export function Modal({
-                          isOpen,
-                          onClose,
-                          title,
-                          children,
-                          actions,
-                          size = 'md',
-                      }: ModalProps) {
+export function Modal({ isOpen, onClose, title, children, actions, size = 'md' }: ModalProps) {
     const modalRef = useRef<HTMLDivElement>(null);
     const previousActiveElement = useRef<HTMLElement | null>(null);
 
@@ -58,7 +51,7 @@ export function Modal({
             // Focus trap
             if (e.key === 'Tab') {
                 const focusableElements = modalRef.current?.querySelectorAll<HTMLElement>(
-                        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+                    'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
                 );
 
                 if (focusableElements && focusableElements.length > 0) {
@@ -94,40 +87,40 @@ export function Modal({
     };
 
     return (
+        <div
+            className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity z-50 flex items-center justify-center p-4"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="modal-title"
+            onClick={onClose}
+        >
             <div
-                    className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity z-50 flex items-center justify-center p-4"
-                    role="dialog"
-                    aria-modal="true"
-                    aria-labelledby="modal-title"
-                    onClick={onClose}
+                ref={modalRef}
+                className={`relative transform overflow-hidden rounded-lg bg-white shadow-xl transition-all sm:w-full ${sizeClasses[size]}`}
+                role="document"
+                onClick={(e) => e.stopPropagation()}
+                tabIndex={-1}
             >
-                <div
-                        ref={modalRef}
-                        className={`relative transform overflow-hidden rounded-lg bg-white shadow-xl transition-all sm:w-full ${sizeClasses[size]}`}
-                        role="document"
-                        onClick={(e) => e.stopPropagation()}
-                        tabIndex={-1}
-                >
-                    <div className="bg-white px-4 pb-4 pt-5 sm:p-6">
-                        <div className="sm:flex sm:items-start">
-                            <div className="w-full">
-                                <h3
-                                        id="modal-title"
-                                        className="text-lg font-semibold leading-6 text-gray-900"
-                                >
-                                    {title}
-                                </h3>
-                                <div className="mt-4">{children}</div>
-                            </div>
+                <div className="bg-white px-4 pb-4 pt-5 sm:p-6">
+                    <div className="sm:flex sm:items-start">
+                        <div className="w-full">
+                            <h3
+                                id="modal-title"
+                                className="text-lg font-semibold leading-6 text-gray-900"
+                            >
+                                {title}
+                            </h3>
+                            <div className="mt-4">{children}</div>
                         </div>
                     </div>
-                    {actions && (
-                            <div className="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6 border-t border-gray-200">
-                                {actions}
-                            </div>
-                    )}
                 </div>
+                {actions && (
+                    <div className="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6 border-t border-gray-200">
+                        {actions}
+                    </div>
+                )}
             </div>
+        </div>
     );
 }
 

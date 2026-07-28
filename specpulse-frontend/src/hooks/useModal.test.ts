@@ -1,22 +1,22 @@
-import {act, renderHook} from '@testing-library/react';
-import {describe, expect, it} from 'vitest';
-import {useModal} from './useModal';
+import { act, renderHook } from '@testing-library/react';
+import { describe, expect, it } from 'vitest';
+import { useModal } from './useModal';
 
 describe('useModal', () => {
     it('should initialize with closed state by default', () => {
-        const {result} = renderHook(() => useModal());
+        const { result } = renderHook(() => useModal());
 
         expect(result.current.isOpen).toBe(false);
     });
 
     it('should initialize with provided initial state', () => {
-        const {result} = renderHook(() => useModal(true));
+        const { result } = renderHook(() => useModal(true));
 
         expect(result.current.isOpen).toBe(true);
     });
 
     it('should open modal when open() is called', () => {
-        const {result} = renderHook(() => useModal(false));
+        const { result } = renderHook(() => useModal(false));
 
         act(() => {
             result.current.open();
@@ -26,7 +26,7 @@ describe('useModal', () => {
     });
 
     it('should close modal when close() is called', () => {
-        const {result} = renderHook(() => useModal(true));
+        const { result } = renderHook(() => useModal(true));
 
         act(() => {
             result.current.close();
@@ -36,7 +36,7 @@ describe('useModal', () => {
     });
 
     it('should toggle modal state when toggle() is called', () => {
-        const {result} = renderHook(() => useModal(false));
+        const { result } = renderHook(() => useModal(false));
 
         act(() => {
             result.current.toggle();
@@ -52,7 +52,7 @@ describe('useModal', () => {
     });
 
     it('should have stable function references (memoized)', () => {
-        const {result, rerender} = renderHook(() => useModal());
+        const { result, rerender } = renderHook(() => useModal());
 
         const firstOpen = result.current.open;
         const firstClose = result.current.close;
@@ -66,7 +66,7 @@ describe('useModal', () => {
     });
 
     it('should handle multiple open calls without issues', () => {
-        const {result} = renderHook(() => useModal(false));
+        const { result } = renderHook(() => useModal(false));
 
         act(() => {
             result.current.open();
@@ -78,7 +78,7 @@ describe('useModal', () => {
     });
 
     it('should handle multiple close calls without issues', () => {
-        const {result} = renderHook(() => useModal(true));
+        const { result } = renderHook(() => useModal(true));
 
         act(() => {
             result.current.close();

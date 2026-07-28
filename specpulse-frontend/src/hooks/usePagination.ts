@@ -1,4 +1,4 @@
-import {useCallback, useState} from 'react';
+import { useCallback, useState } from 'react';
 
 interface UsePaginationOptions {
     initialPage?: number;
@@ -25,7 +25,7 @@ export function usePagination<T>(
     items: T[],
     options: UsePaginationOptions = {}
 ): UsePaginationReturn<T> {
-    const {initialPage = 1, initialPageSize = 10} = options;
+    const { initialPage = 1, initialPageSize = 10 } = options;
 
     const [page, setPage] = useState(initialPage);
     const [pageSize, setPageSize] = useState(initialPageSize);

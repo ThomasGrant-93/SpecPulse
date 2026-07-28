@@ -22,6 +22,8 @@ export interface Swagger2Spec {
     produces?: string[];
     // Swagger 2.0 path items/operations differ from OAS3, so we keep them loosely typed.
     paths: Record<string, unknown>;
+    securityDefinitions?: Record<string, any>;
+    security?: SecurityRequirementObject[];
     tags?: TagObject[];
     externalDocs?: ExternalDocumentationObject;
 }
@@ -213,6 +215,10 @@ export interface ApiEndpoint {
     requestBody?: RequestBodyObject;
     responses?: ResponsesObject;
     deprecated?: boolean;
+    // Security requirements for this operation.
+    // For OAS3: operation.security is SecurityRequirementObject[]
+    // For Swagger2: operation.security is also an array of objects mapping schemeName -> scopes (often empty).
+    security?: SecurityRequirementObject[];
 }
 
 export type HttpMethod = 'get' | 'post' | 'put' | 'delete' | 'patch' | 'options' | 'head' | 'trace';
@@ -222,3 +228,15 @@ export interface ApiTagGroup {
     description?: string;
     endpoints: ApiEndpoint[];
 }
+
+export type AuthCredentials = {
+    // API key value
+    value?: string;
+    // Basic auth
+    username?: string;
+    password?: string;
+    // Bearer/OAuth2/OIDC tokens
+    token?: string;
+};
+
+export type AuthCredentialsMap = Record<string, AuthCredentials>;

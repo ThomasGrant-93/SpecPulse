@@ -1,6 +1,6 @@
-import {act, renderHook} from '@testing-library/react';
-import {beforeEach, describe, expect, it} from 'vitest';
-import {useSearch} from './useSearch';
+import { act, renderHook } from '@testing-library/react';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { useSearch } from './useSearch';
 
 describe('useSearch', () => {
     beforeEach(() => {
@@ -12,7 +12,7 @@ describe('useSearch', () => {
     });
 
     it('should initialize with empty query', () => {
-        const {result} = renderHook(() => useSearch());
+        const { result } = renderHook(() => useSearch());
 
         expect(result.current.query).toBe('');
         expect(result.current.debouncedQuery).toBe('');
@@ -20,7 +20,7 @@ describe('useSearch', () => {
     });
 
     it('should update query immediately when setQuery is called', () => {
-        const {result} = renderHook(() => useSearch());
+        const { result } = renderHook(() => useSearch());
 
         act(() => {
             result.current.setQuery('test');
@@ -32,7 +32,7 @@ describe('useSearch', () => {
     });
 
     it('should update debouncedQuery after debounce delay', () => {
-        const {result} = renderHook(() => useSearch({debounceMs: 300}));
+        const { result } = renderHook(() => useSearch({ debounceMs: 300 }));
 
         act(() => {
             result.current.setQuery('test');
@@ -44,7 +44,7 @@ describe('useSearch', () => {
     });
 
     it('should trim query by default', () => {
-        const {result} = renderHook(() => useSearch());
+        const { result } = renderHook(() => useSearch());
 
         act(() => {
             result.current.setQuery('  test query  ');
@@ -54,7 +54,7 @@ describe('useSearch', () => {
     });
 
     it('should not trim query when trim option is false', () => {
-        const {result} = renderHook(() => useSearch({trim: false}));
+        const { result } = renderHook(() => useSearch({ trim: false }));
 
         act(() => {
             result.current.setQuery('  test query  ');
@@ -64,7 +64,7 @@ describe('useSearch', () => {
     });
 
     it('should use custom debounce delay', () => {
-        const {result} = renderHook(() => useSearch({debounceMs: 500}));
+        const { result } = renderHook(() => useSearch({ debounceMs: 500 }));
 
         act(() => {
             result.current.setQuery('test');
@@ -81,7 +81,7 @@ describe('useSearch', () => {
     });
 
     it('should clear query and debouncedQuery', () => {
-        const {result} = renderHook(() => useSearch());
+        const { result } = renderHook(() => useSearch());
 
         act(() => {
             result.current.setQuery('test');
@@ -101,7 +101,7 @@ describe('useSearch', () => {
     });
 
     it('should indicate when search is active', () => {
-        const {result} = renderHook(() => useSearch());
+        const { result } = renderHook(() => useSearch());
 
         expect(result.current.isActive).toBe(false);
 
@@ -119,7 +119,7 @@ describe('useSearch', () => {
     });
 
     it('should cancel previous debounce when new query is set', () => {
-        const {result} = renderHook(() => useSearch({debounceMs: 300}));
+        const { result } = renderHook(() => useSearch({ debounceMs: 300 }));
 
         act(() => {
             result.current.setQuery('first');
@@ -138,7 +138,7 @@ describe('useSearch', () => {
     });
 
     it('should handle empty query', () => {
-        const {result} = renderHook(() => useSearch());
+        const { result } = renderHook(() => useSearch());
 
         act(() => {
             result.current.setQuery('');
@@ -149,7 +149,7 @@ describe('useSearch', () => {
     });
 
     it('should handle special characters in query', () => {
-        const {result} = renderHook(() => useSearch());
+        const { result } = renderHook(() => useSearch());
 
         act(() => {
             result.current.setQuery('test@#$%^&*()');

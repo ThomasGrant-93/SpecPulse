@@ -1,7 +1,9 @@
-import {fireEvent, render, screen, waitFor} from '@testing-library/react';
-import {describe, expect, it, vi, beforeEach} from 'vitest';
-import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import GroupSelector from './GroupSelector';
+// Import mocked api after mocking
+import { groupsApi } from '@/services/api';
 
 // Mock the groupsApi module
 vi.mock('@/services/api', () => ({
@@ -10,17 +12,14 @@ vi.mock('@/services/api', () => ({
     },
 }));
 
-// Import mocked api after mocking
-import {groupsApi} from '@/services/api';
-
 const createQueryClient = () =>
-        new QueryClient({
-            defaultOptions: {
-                queries: {
-                    retry: false,
-                },
+    new QueryClient({
+        defaultOptions: {
+            queries: {
+                retry: false,
             },
-        });
+        },
+    });
 
 beforeEach(() => {
     vi.clearAllMocks();
@@ -67,38 +66,28 @@ const mockGroups = [
 
 const renderWithProviders = (component: React.ReactElement, queryClient = createQueryClient()) => {
     return {
-        ...render(
-                <QueryClientProvider client={queryClient}>
-                    {component}
-                </QueryClientProvider>
-        ),
+        ...render(<QueryClientProvider client={queryClient}>{component}</QueryClientProvider>),
         queryClient,
     };
 };
 
 describe('GroupSelector', () => {
     it('should show loading state initially', () => {
-        (groupsApi.getAll as any).mockResolvedValue({data: []});
+        (groupsApi.getAll as any).mockResolvedValue({ data: [] });
 
         const queryClient = createQueryClient();
 
-        renderWithProviders(
-                <GroupSelector value={null} onChange={vi.fn()}/>,
-                queryClient
-        );
+        renderWithProviders(<GroupSelector value={null} onChange={vi.fn()} />, queryClient);
 
         expect(screen.getByText(/loading groups/i)).toBeInTheDocument();
     });
 
     it('should show message when no groups available', async () => {
-        (groupsApi.getAll as any).mockResolvedValue({data: []});
+        (groupsApi.getAll as any).mockResolvedValue({ data: [] });
 
         const queryClient = createQueryClient();
 
-        renderWithProviders(
-                <GroupSelector value={null} onChange={vi.fn()}/>,
-                queryClient
-        );
+        renderWithProviders(<GroupSelector value={null} onChange={vi.fn()} />, queryClient);
 
         await waitFor(() => {
             expect(screen.getByText(/no groups available/i)).toBeInTheDocument();
@@ -108,14 +97,11 @@ describe('GroupSelector', () => {
     });
 
     it('should render groups as options', async () => {
-        (groupsApi.getAll as any).mockResolvedValue({data: mockGroups});
+        (groupsApi.getAll as any).mockResolvedValue({ data: mockGroups });
 
         const queryClient = createQueryClient();
 
-        renderWithProviders(
-                <GroupSelector value={null} onChange={vi.fn()}/>,
-                queryClient
-        );
+        renderWithProviders(<GroupSelector value={null} onChange={vi.fn()} />, queryClient);
 
         await waitFor(() => {
             expect(screen.getByLabelText('Group')).toBeInTheDocument();
@@ -128,14 +114,11 @@ describe('GroupSelector', () => {
     });
 
     it('should show "No group" as first option', async () => {
-        (groupsApi.getAll as any).mockResolvedValue({data: mockGroups});
+        (groupsApi.getAll as any).mockResolvedValue({ data: mockGroups });
 
         const queryClient = createQueryClient();
 
-        renderWithProviders(
-                <GroupSelector value={null} onChange={vi.fn()}/>,
-                queryClient
-        );
+        renderWithProviders(<GroupSelector value={null} onChange={vi.fn()} />, queryClient);
 
         await waitFor(() => {
             const select = screen.getByLabelText('Group') as HTMLSelectElement;
@@ -144,51 +127,45 @@ describe('GroupSelector', () => {
     });
 
     it('should call onChange when group is selected', async () => {
-        (groupsApi.getAll as any).mockResolvedValue({data: mockGroups});
+        (groupsApi.getAll as any).mockResolvedValue({ data: mockGroups });
 
         const queryClient = createQueryClient();
         const onChange = vi.fn();
 
-        renderWithProviders(
-                <GroupSelector value={null} onChange={onChange}/>,
-                queryClient
-        );
+        renderWithProviders(<GroupSelector value={null} onChange={onChange} />, queryClient);
 
         await waitFor(() => {
             const select = screen.getByLabelText('Group') as HTMLSelectElement;
-            fireEvent.change(select, {target: {value: '1'}});
+            fireEvent.change(select, { target: { value: '1' } });
         });
 
         expect(onChange).toHaveBeenCalledWith(1);
     });
 
     it('should call onChange with null when "No group" is selected', async () => {
-        (groupsApi.getAll as any).mockResolvedValue({data: mockGroups});
+        (groupsApi.getAll as any).mockResolvedValue({ data: mockGroups });
 
         const queryClient = createQueryClient();
         const onChange = vi.fn();
 
-        renderWithProviders(
-                <GroupSelector value={1} onChange={onChange}/>,
-                queryClient
-        );
+        renderWithProviders(<GroupSelector value={1} onChange={onChange} />, queryClient);
 
         await waitFor(() => {
             const select = screen.getByLabelText('Group') as HTMLSelectElement;
-            fireEvent.change(select, {target: {value: ''}});
+            fireEvent.change(select, { target: { value: '' } });
         });
 
         expect(onChange).toHaveBeenCalledWith(null);
     });
 
     it('should respect disabled prop', async () => {
-        (groupsApi.getAll as any).mockResolvedValue({data: mockGroups});
+        (groupsApi.getAll as any).mockResolvedValue({ data: mockGroups });
 
         const queryClient = createQueryClient();
 
         renderWithProviders(
-                <GroupSelector value={null} onChange={vi.fn()} disabled/>,
-                queryClient
+            <GroupSelector value={null} onChange={vi.fn()} disabled />,
+            queryClient
         );
 
         await waitFor(() => {
@@ -198,13 +175,13 @@ describe('GroupSelector', () => {
     });
 
     it('should use custom label', async () => {
-        (groupsApi.getAll as any).mockResolvedValue({data: mockGroups});
+        (groupsApi.getAll as any).mockResolvedValue({ data: mockGroups });
 
         const queryClient = createQueryClient();
 
         renderWithProviders(
-                <GroupSelector value={null} onChange={vi.fn()} label="Custom Label"/>,
-                queryClient
+            <GroupSelector value={null} onChange={vi.fn()} label="Custom Label" />,
+            queryClient
         );
 
         await waitFor(() => {
@@ -213,14 +190,11 @@ describe('GroupSelector', () => {
     });
 
     it('should display service count in option text', async () => {
-        (groupsApi.getAll as any).mockResolvedValue({data: mockGroups});
+        (groupsApi.getAll as any).mockResolvedValue({ data: mockGroups });
 
         const queryClient = createQueryClient();
 
-        renderWithProviders(
-                <GroupSelector value={null} onChange={vi.fn()}/>,
-                queryClient
-        );
+        renderWithProviders(<GroupSelector value={null} onChange={vi.fn()} />, queryClient);
 
         await waitFor(() => {
             const select = screen.getByLabelText('Group') as HTMLSelectElement;
@@ -230,14 +204,11 @@ describe('GroupSelector', () => {
     });
 
     it('should display icon in option text', async () => {
-        (groupsApi.getAll as any).mockResolvedValue({data: mockGroups});
+        (groupsApi.getAll as any).mockResolvedValue({ data: mockGroups });
 
         const queryClient = createQueryClient();
 
-        renderWithProviders(
-                <GroupSelector value={null} onChange={vi.fn()}/>,
-                queryClient
-        );
+        renderWithProviders(<GroupSelector value={null} onChange={vi.fn()} />, queryClient);
 
         await waitFor(() => {
             const select = screen.getByLabelText('Group') as HTMLSelectElement;
@@ -247,34 +218,28 @@ describe('GroupSelector', () => {
     });
 
     it('should indent child group options', async () => {
-        (groupsApi.getAll as any).mockResolvedValue({data: mockGroups});
+        (groupsApi.getAll as any).mockResolvedValue({ data: mockGroups });
 
         const queryClient = createQueryClient();
 
-        renderWithProviders(
-                <GroupSelector value={null} onChange={vi.fn()}/>,
-                queryClient
-        );
+        renderWithProviders(<GroupSelector value={null} onChange={vi.fn()} />, queryClient);
 
         await waitFor(() => {
             const select = screen.getByLabelText('Group') as HTMLSelectElement;
             // Frontend is a child group, should have indentation
             const frontendOption = Array.from(select.options).find((opt) =>
-                    opt.text.includes('Frontend')
+                opt.text.includes('Frontend')
             );
             expect(frontendOption?.style.paddingLeft).toBe('16px');
         });
     });
 
     it('should select correct value when value prop is provided', async () => {
-        (groupsApi.getAll as any).mockResolvedValue({data: mockGroups});
+        (groupsApi.getAll as any).mockResolvedValue({ data: mockGroups });
 
         const queryClient = createQueryClient();
 
-        renderWithProviders(
-                <GroupSelector value={2} onChange={vi.fn()}/>,
-                queryClient
-        );
+        renderWithProviders(<GroupSelector value={2} onChange={vi.fn()} />, queryClient);
 
         await waitFor(() => {
             const select = screen.getByLabelText('Group') as HTMLSelectElement;

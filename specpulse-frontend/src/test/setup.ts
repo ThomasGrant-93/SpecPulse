@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom';
-import {cleanup} from '@testing-library/react';
-import {afterEach, vi} from 'vitest';
-import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
+import { cleanup } from '@testing-library/react';
+import { afterEach, vi } from 'vitest';
+import { QueryClient } from '@tanstack/react-query'; // Create a default QueryClient for tests
 
 // Create a default QueryClient for tests
 const testQueryClient = new QueryClient({
@@ -45,4 +45,4 @@ Object.defineProperty(window, 'scrollTo', {
 });
 
 // Export for use in tests
-export {testQueryClient};
+export { testQueryClient };
