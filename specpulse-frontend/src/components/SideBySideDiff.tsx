@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react';
 
+import { formatJsonForDiff } from '@/utils/formatJsonForDiff';
+
 interface SideBySideDiffProps {
     oldSpec: string;
     newSpec: string;
@@ -17,10 +19,13 @@ interface DiffLine {
 export default function SideBySideDiff({ oldSpec, newSpec }: SideBySideDiffProps) {
     const [collapsedSections, setCollapsedSections] = useState<Set<number>>(new Set());
 
+    const formattedOldSpec = useMemo(() => formatJsonForDiff(oldSpec), [oldSpec]);
+    const formattedNewSpec = useMemo(() => formatJsonForDiff(newSpec), [newSpec]);
+
     // Parse diff into lines
     const diffLines = useMemo(() => {
-        return parseDiff(oldSpec, newSpec);
-    }, [oldSpec, newSpec]);
+        return parseDiff(formattedOldSpec, formattedNewSpec);
+    }, [formattedOldSpec, formattedNewSpec]);
 
     // Group lines into collapsible sections
     const sections = useMemo(() => {
