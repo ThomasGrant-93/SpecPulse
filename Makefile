@@ -2,7 +2,7 @@
 # SpecPulse Project Management
 
 .PHONY: help dev build test clean docker docker-up docker-down logs backend frontend install-deps lint format \
-	build-docker docker-login docker-push docker-publish
+	build-docker
 
 # ==============================================================================
 # Переменные
@@ -119,26 +119,6 @@ build-docker: ## Build Docker image locally
 	@echo "$(COLOR_GREEN)Сборка Docker образа...$(COLOR_RESET)"
 	@docker build -t $(PROJECT_NAME):$(DOCKER_TAG) .
 	@echo "$(COLOR_GREEN)Docker образ собран: $(PROJECT_NAME):$(DOCKER_TAG)$(COLOR_RESET)"
-
-docker-login: ## Log in to Docker Hub (use DOCKERHUB_USERNAME and DOCKERHUB_TOKEN)
-	@if [ -z "$(DOCKERHUB_USERNAME)" ] || [ -z "$(DOCKERHUB_TOKEN)" ]; then \
-		echo "$(COLOR_RED)Set DOCKERHUB_USERNAME and DOCKERHUB_TOKEN first$(COLOR_RESET)"; \
-		exit 1; \
-	fi
-	@echo "$(COLOR_YELLOW)Logging into Docker Hub...$(COLOR_RESET)"
-	@echo "$(DOCKERHUB_TOKEN)" | docker login -u "$(DOCKERHUB_USERNAME)" --password-stdin
-
-docker-push: ## Tag and push the image to Docker Hub
-	@if [ -z "$(DOCKERHUB_IMAGE)" ]; then \
-		echo "$(COLOR_RED)Set DOCKERHUB_IMAGE (or DOCKERHUB_USERNAME) first$(COLOR_RESET)"; \
-		exit 1; \
-	fi
-	@echo "$(COLOR_GREEN)Pushing $(DOCKERHUB_IMAGE):$(DOCKER_TAG)$(COLOR_RESET)"
-	@docker tag $(PROJECT_NAME):$(DOCKER_TAG) $(DOCKERHUB_IMAGE):$(DOCKER_TAG)
-	@docker push $(DOCKERHUB_IMAGE):$(DOCKER_TAG)
-
-docker-publish: build-docker docker-login docker-push ## Build and publish image to Docker Hub
-	@echo "$(COLOR_GREEN)Docker image published to Docker Hub$(COLOR_RESET)"
 
 # ==============================================================================
 # Tests
