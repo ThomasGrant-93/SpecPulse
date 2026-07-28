@@ -14,23 +14,29 @@ export default function DiffsPage() {
 
     // Fetch spec content for selected versions
     const { data: fromVersionSpec } = useQuery({
-        queryKey: ['version-spec', selectedFromVersion],
+        queryKey: ['version-spec', selectedFromVersion, selectedToVersion],
         queryFn: async () => {
-            if (!selectedFromVersion) return null;
-            const response = await versionsApi.getById(selectedFromVersion);
+            if (!selectedFromVersion || !selectedToVersion) return null;
+            const response = await versionsApi.getById(selectedFromVersion, {
+                diff_only: true,
+                compare_to: selectedToVersion,
+            });
             return response.data.specContent;
         },
-        enabled: !!selectedFromVersion,
+        enabled: !!selectedFromVersion && !!selectedToVersion,
     });
 
     const { data: toVersionSpec } = useQuery({
-        queryKey: ['version-spec', selectedToVersion],
+        queryKey: ['version-spec', selectedToVersion, selectedFromVersion],
         queryFn: async () => {
-            if (!selectedToVersion) return null;
-            const response = await versionsApi.getById(selectedToVersion);
+            if (!selectedFromVersion || !selectedToVersion) return null;
+            const response = await versionsApi.getById(selectedToVersion, {
+                diff_only: true,
+                compare_to: selectedFromVersion,
+            });
             return response.data.specContent;
         },
-        enabled: !!selectedToVersion,
+        enabled: !!selectedFromVersion && !!selectedToVersion,
     });
 
     const { data: service } = useQuery({
