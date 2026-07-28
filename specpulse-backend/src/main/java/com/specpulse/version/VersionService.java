@@ -2,6 +2,8 @@ package com.specpulse.version;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.NullNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.specpulse.exception.ResourceNotFoundException;
 import com.specpulse.parser.OpenApiParser;
@@ -25,6 +27,11 @@ public class VersionService implements SpecVersionPullPort {
     private final SpecVersionRepository repository;
     private final OpenApiParser parser;
     private final ObjectMapper objectMapper;
+
+    // Guardrails to prevent extremely expensive filtering on very large specs.
+    // When exceeded, we fall back to emitting the full left subtree to keep the API responsive.
+    private static final long FILTER_TIME_BUDGET_NANOS = 750_000_000L; // 750ms
+    private static final int MAX_FILTER_DEPTH = 200;
 
     @Value("${specpulse.outbound.max-spec-bytes:2097152}")
     private long maxSpecBytes = 2_097_152L;
@@ -120,6 +127,46 @@ public class VersionService implements SpecVersionPullPort {
     }
 
     @Transactional(readOnly = true)
+    public SpecVersionDTO getVersionByIdDiffOnly(Long id, Long compareToId) {
+        SpecVersionEntity base = repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Spec version", id));
+        SpecVersionEntity other = repository.findById(compareToId)
+                .orElseThrow(() -> new ResourceNotFoundException("Spec version", compareToId));
+
+        JsonNode baseNode = base.getSpecContent();
+        JsonNode otherNode = other.getSpecContent();
+
+        boolean[] timedOut = {false};
+        long deadlineNanos = System.nanoTime() + FILTER_TIME_BUDGET_NANOS;
+        JsonNode filtered = filterDiff(baseNode, otherNode, deadlineNanos, 0, timedOut);
+        if (filtered == null) {
+            filtered = objectMapper.createObjectNode();
+        }
+
+        if (timedOut[0]) {
+            log.debug("Spec diff filtering hit budget (serviceVersionId={}, compareToId={}) - falling back to emitting left subtree", id, compareToId);
+        }
+
+        String contentString;
+        try {
+            contentString = objectMapper.writeValueAsString(filtered);
+        } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+            throw new IllegalArgumentException("Failed to serialize filtered OpenAPI content", e);
+        }
+
+        return new SpecVersionDTO(
+                base.getId(),
+                base.getService().getId(),
+                base.getVersionHash(),
+                base.getSpecVersion(),
+                base.getSpecTitle(),
+                base.getFileSizeBytes(),
+                base.getPulledAt(),
+                contentString
+        );
+    }
+
+    @Transactional(readOnly = true)
     public String getSpecContentById(Long id) {
         return repository.findById(id)
                 .map(SpecVersionEntity::getSpecContent)
@@ -140,5 +187,68 @@ public class VersionService implements SpecVersionPullPort {
         } catch (com.fasterxml.jackson.core.JsonProcessingException ignored) {
             return YAML_MAPPER.readTree(specContent);
         }
+    }
+
+    /**
+     * Filter JSON to include only parts that differ between left and right.
+     *
+     * Rules (left-side view):
+     * - If a node is equal => omitted from output.
+     * - If an object key exists only on the right => emitted as null on the left side.
+     * - If an array differs => the full left array is emitted.
+     */
+    private JsonNode filterDiff(JsonNode left, JsonNode right, long deadlineNanos, int depth, boolean[] timedOut) {
+        if (System.nanoTime() > deadlineNanos || depth > MAX_FILTER_DEPTH) {
+            timedOut[0] = true;
+            return fallbackForTimeout(left, right);
+        }
+
+        if (left == null && right == null) {
+            return null;
+        }
+        if (left == null) {
+            return NullNode.getInstance();
+        }
+        if (right == null) {
+            return left;
+        }
+        if (left.equals(right)) {
+            return null;
+        }
+
+        if (left.isObject() && right.isObject()) {
+            ObjectNode out = objectMapper.createObjectNode();
+            // Union of keys (sorted for deterministic output)
+            java.util.Set<String> keys = new java.util.TreeSet<>();
+            left.fieldNames().forEachRemaining(keys::add);
+            right.fieldNames().forEachRemaining(keys::add);
+
+            for (String key : keys) {
+                JsonNode l = left.get(key);
+                JsonNode r = right.get(key);
+                JsonNode filteredChild = filterDiff(l, r, deadlineNanos, depth + 1, timedOut);
+                if (filteredChild != null) {
+                    out.set(key, filteredChild);
+                }
+            }
+
+            return out.size() == 0 ? null : out;
+        }
+
+        if (left.isArray() && right.isArray()) {
+            // If arrays differ, emit full left array to preserve readability.
+            return left;
+        }
+
+        // Primitive/value mismatch.
+        return left;
+    }
+
+    private JsonNode fallbackForTimeout(JsonNode left, JsonNode right) {
+        // Preserve the original null placeholder semantics when possible.
+        if (left == null && right != null) {
+            return NullNode.getInstance();
+        }
+        return left;
     }
 }
