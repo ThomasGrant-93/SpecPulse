@@ -25,6 +25,12 @@ spring:
     locations: classpath:db/migration
     baseline-on-migrate: true
 
+# Springdoc OpenAPI / Swagger UI configuration
+springdoc:
+  swagger-ui:
+    # Expose the interactive documentation under the conventional route.
+    path: /swagger-ui
+
 # Scheduler configuration
 specpulse:
   scheduler:

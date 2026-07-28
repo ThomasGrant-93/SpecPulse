@@ -5,16 +5,10 @@ import com.specpulse.registry.RegistryService;
 import com.specpulse.registry.ServiceDTO;
 import com.specpulse.registry.ServiceWithVersionDTO;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.util.List;
@@ -26,9 +20,30 @@ public class RegistryController {
     private final RegistryService registryService;
     private final RegistryApiMapper registryApiMapper;
 
-    public RegistryController(RegistryService registryService, RegistryApiMapper registryApiMapper) {
+    // If configured (non-empty), requires Authorization: Bearer <token> for registry mutations.
+    private final String authToken;
+
+    public RegistryController(
+            RegistryService registryService,
+            RegistryApiMapper registryApiMapper,
+            @Value("${specpulse.auth.token:}") String authToken
+    ) {
         this.registryService = registryService;
         this.registryApiMapper = registryApiMapper;
+        this.authToken = authToken;
+    }
+
+    private boolean isRegistryAuthorized(String authorization) {
+        if (authToken == null || authToken.isBlank()) {
+            return true; // Backward-compatible default.
+        }
+
+        if (authorization == null || !authorization.startsWith("Bearer ")) {
+            return false;
+        }
+
+        String token = authorization.substring("Bearer ".length()).trim();
+        return authToken.equals(token);
     }
 
     @GetMapping
@@ -55,7 +70,12 @@ public class RegistryController {
 
     @PostMapping("/validate")
     public ResponseEntity<ValidateResponse> validateService(
-            @RequestBody ValidateRequest request) {
+            @RequestHeader(name = "Authorization", required = false) String authorization,
+            @RequestBody ValidateRequest request
+    ) {
+        if (!isRegistryAuthorized(authorization)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
         var serviceRequest = registryApiMapper.toServiceValidationRequest(request);
         var result = registryService.validateService(serviceRequest);
 
@@ -69,7 +89,11 @@ public class RegistryController {
 
     @PostMapping
     public ResponseEntity<ServiceDTO> createService(
+            @RequestHeader(name = "Authorization", required = false) String authorization,
             @Valid @RequestBody RegistryService.CreateServiceRequest request) {
+        if (!isRegistryAuthorized(authorization)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
         ServiceDTO created = registryService.createService(request);
         return ResponseEntity.created(URI.create("/api/v1/registry/" + created.id()))
                 .body(created);
@@ -78,12 +102,22 @@ public class RegistryController {
     @PutMapping("/{id}")
     public ResponseEntity<ServiceDTO> updateService(
             @PathVariable Long id,
+            @RequestHeader(name = "Authorization", required = false) String authorization,
             @Valid @RequestBody RegistryService.UpdateServiceRequest request) {
+        if (!isRegistryAuthorized(authorization)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
         return ResponseEntity.ok(registryService.updateService(id, request));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteService(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteService(
+            @PathVariable Long id,
+            @RequestHeader(name = "Authorization", required = false) String authorization
+    ) {
+        if (!isRegistryAuthorized(authorization)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
         registryService.deleteService(id);
         return ResponseEntity.noContent().build();
     }

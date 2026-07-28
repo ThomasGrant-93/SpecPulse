@@ -17,11 +17,7 @@ import java.net.http.HttpResponse;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 @Service
 public class ExternalApiProxyService {
@@ -33,8 +29,7 @@ public class ExternalApiProxyService {
             "transfer-encoding",
             "expect",
             "upgrade",
-            "proxy-connection",
-            "cookie"
+            "proxy-connection"
     );
 
     private static final List<String> ALLOWED_METHODS = List.of("GET", "POST", "PUT", "PATCH", "DELETE");
@@ -43,12 +38,18 @@ public class ExternalApiProxyService {
     private final ObjectMapper objectMapper;
     private final HttpClient httpClient;
 
+    private final long maxRequestBodyBytes;
+
     public ExternalApiProxyService(OutboundUrlSecurity outboundUrlSecurity, ObjectMapper objectMapper) {
         this.outboundUrlSecurity = outboundUrlSecurity;
         this.objectMapper = objectMapper;
         this.httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(10))
                 .build();
+
+        // Best-effort request-body cap to prevent memory/CPU DoS.
+        // Response parsing is also capped separately.
+        this.maxRequestBodyBytes = 2_000_000L;
     }
 
     public ExternalApiProxyResponse proxy(ExternalApiProxyRequest request) {
@@ -74,6 +75,12 @@ public class ExternalApiProxyService {
                     // For non-json, prefer raw text when the client sent a text node.
                     outgoingBody = request.body().isTextual() ? request.body().asText() : request.body().toString();
                 }
+
+                long bodyBytes = outgoingBody.getBytes(StandardCharsets.UTF_8).length;
+                if (bodyBytes > maxRequestBodyBytes) {
+                    throw new IllegalArgumentException("Request body is too large");
+                }
+
                 bodyPublisher = HttpRequest.BodyPublishers.ofString(outgoingBody, charsetFromContentType(contentType));
 
                 // Ensure there's a Content-Type if the caller provided a body.

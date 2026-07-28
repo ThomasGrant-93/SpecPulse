@@ -92,9 +92,9 @@ frontend: ## Запустить только frontend
 # Сборка
 # ==============================================================================
 
-build: build-backend build-frontend ## Собрать backend и frontend
+build: build-frontend build-backend ## Собрать backend и frontend
 
-build-backend: ## Собрать только backend
+build-backend: build-frontend ## Собрать только backend
 	@echo "$(COLOR_GREEN)Сборка backend...$(COLOR_RESET)"
 	@./gradlew :$(BACKEND_DIR):build -x test
 	@echo "$(COLOR_GREEN)Backend собран: $(BACKEND_DIR)/build/libs/$(COLOR_RESET)"

@@ -92,6 +92,34 @@ tasks.named('test') {
     }
 }
 
+// ==========================
+// Frontend static assets sync
+// ==========================
+// React/Vite build output is produced in: ../specpulse-frontend/dist
+// We copy it into Spring Boot's default static resource location (classpath:/static)
+// so that endpoints like GET / and GET /assets/* work from the backend artifact.
+
+def frontendDistDir = rootProject.file('specpulse-frontend/dist')
+
+tasks.register('syncFrontendDist', Copy) {
+    // Only sync if dist exists to avoid breaking Docker builds where frontend is built in a separate stage.
+    onlyIf { frontendDistDir.exists() }
+    from(frontendDistDir)
+    into(layout.buildDirectory.dir('resources/main/static'))
+    includeEmptyDirs = false
+}
+
+// Ensure static assets are present in build/resources/main before packaging/running.
+tasks.named('processResources') {
+    dependsOn tasks.named('syncFrontendDist')
+}
+
+// For tests we need deterministic static assets to verify content types.
+tasks.named('test') {
+    dependsOn ':specpulse-frontend:npmBuild'
+    dependsOn tasks.named('syncFrontendDist')
+}
+
 // Flyway configuration
 flyway {
     locations = ['classpath:db/migration']

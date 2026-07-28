@@ -1,17 +1,15 @@
 package com.specpulse.settings;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -21,6 +19,7 @@ import java.util.stream.Collectors;
 public class ApplicationSettingService {
 
     private final ApplicationSettingRepositoryPort settingRepository;
+    private final ObjectMapper objectMapper;
 
     /**
      * Получить все настройки сгруппированные по категориям
@@ -87,9 +86,10 @@ public class ApplicationSettingService {
                     String.format("Setting is not editable: %s.%s", category, key));
         }
 
-        // Валидация типа значения
-        Object typedValue = validateAndConvertType(value, setting.getValueType());
-        setting.setValue(typedValue);
+        // Ensure we always write valid JSON into jsonb column.
+        // Hypersistence JsonType stores Java strings as-is into jsonb, so we must provide JSON literals.
+        Object jsonbValue = serializeValueForJsonb(value, setting.getValueType());
+        setting.setValue(jsonbValue);
 
         ApplicationSetting updated = settingRepository.save(setting);
         log.info("Updated setting: {}.{} = {}", category, key, value);
@@ -174,7 +174,7 @@ public class ApplicationSettingService {
                 .id(setting.getId())
                 .category(setting.getCategory())
                 .key(setting.getKey())
-                .value(setting.getValue())
+                .value(normalizeValueForApi(setting.getValue(), setting.getValueType()))
                 .valueType(setting.getValueType())
                 .description(setting.getDescription())
                 .isPublic(setting.getIsPublic())
@@ -202,17 +202,177 @@ public class ApplicationSettingService {
         return descriptions.getOrDefault(category, "Настройки");
     }
 
-    private Object validateAndConvertType(Object value, String valueType) {
-        return switch (valueType) {
-            case "boolean" -> Boolean.parseBoolean(value.toString());
-            case "integer" -> Integer.parseInt(value.toString());
-            case "array" -> {
-                if (value instanceof List) {
-                    yield value;
+    private Object serializeValueForJsonb(Object value, String valueType) {
+        if (value == null) {
+            return null;
+        }
+
+        String normalizedType = valueType == null ? "string" : valueType.toLowerCase();
+
+        try {
+            return switch (normalizedType) {
+                case "boolean" -> {
+                    Boolean b = coerceBoolean(value);
+                    yield objectMapper.writeValueAsString(b); // => true/false (JSON literal)
                 }
-                yield Collections.singletonList(value);
+                case "integer" -> {
+                    Integer i = coerceInteger(value);
+                    yield objectMapper.writeValueAsString(i); // => 123
+                }
+                case "number" -> {
+                    // Best-effort numeric support for non-integer values.
+                    if (value instanceof Number n) {
+                        yield objectMapper.writeValueAsString(n);
+                    }
+                    if (value instanceof String s) {
+                        JsonNode node = objectMapper.readTree(s);
+                        if (!node.isNumber()) {
+                            throw new IllegalArgumentException("Invalid numeric setting value");
+                        }
+                        yield objectMapper.writeValueAsString(node.numberValue());
+                    }
+                    yield objectMapper.writeValueAsString(value);
+                }
+                case "array" -> {
+                    Object arrayValue = (value instanceof List<?>) ? value : Collections.singletonList(value);
+                    yield objectMapper.writeValueAsString(arrayValue);
+                }
+                case "object", "json" -> objectMapper.writeValueAsString(value);
+                case "string" -> {
+                    if (!(value instanceof String s)) {
+                        throw new IllegalArgumentException(
+                                "Invalid value type for settings valueType=string. Expected a string." +
+                                        " Received: " + value.getClass().getSimpleName());
+                    }
+                    yield objectMapper.writeValueAsString(s); // => "foo"
+                }
+                default -> {
+                    // For unknown types we treat input as a string unless it's already valid JSON.
+                    if (value instanceof String s) {
+                        if (looksLikeJson(s)) {
+                            // Store raw JSON literal as-is.
+                            yield s;
+                        }
+                        yield objectMapper.writeValueAsString(s);
+                    }
+                    yield objectMapper.writeValueAsString(value);
+                }
+            };
+        } catch (JsonProcessingException e) {
+            throw new IllegalArgumentException("Failed to serialize setting value as JSON");
+        }
+    }
+
+    private Object normalizeValueForApi(Object storedValue, String valueType) {
+        if (storedValue == null) {
+            return null;
+        }
+
+        String normalizedType = valueType == null ? "string" : valueType.toLowerCase();
+
+        try {
+            return switch (normalizedType) {
+                case "boolean" -> {
+                    if (storedValue instanceof Boolean b) yield b;
+                    if (storedValue instanceof String s) yield objectMapper.readValue(s, Boolean.class);
+                    yield Boolean.parseBoolean(storedValue.toString());
+                }
+                case "integer" -> {
+                    if (storedValue instanceof Integer i) yield i;
+                    if (storedValue instanceof Number n) yield n.intValue();
+                    if (storedValue instanceof String s) yield objectMapper.readValue(s, Integer.class);
+                    yield Integer.parseInt(storedValue.toString());
+                }
+                case "number" -> {
+                    if (storedValue instanceof Number n) yield n;
+                    if (storedValue instanceof String s) {
+                        JsonNode node = objectMapper.readTree(s);
+                        yield node.numberValue();
+                    }
+                    yield Double.parseDouble(storedValue.toString());
+                }
+                case "array" -> {
+                    if (storedValue instanceof List<?> l) yield l;
+                    if (storedValue instanceof String s) {
+                        yield objectMapper.readValue(s, new TypeReference<List<Object>>() {
+                        });
+                    }
+                    yield storedValue;
+                }
+                case "object", "json" -> {
+                    if (storedValue instanceof java.util.Map<?, ?> m) yield storedValue;
+                    if (storedValue instanceof String s) {
+                        yield objectMapper.readValue(s, new TypeReference<java.util.Map<String, Object>>() {
+                        });
+                    }
+                    yield storedValue;
+                }
+                case "string" -> {
+                    if (storedValue instanceof String s) {
+                        // If stored as JSON string literal (e.g. "foo"), unquote it.
+                        if (looksLikeJsonStringLiteral(s)) {
+                            yield objectMapper.readValue(s, String.class);
+                        }
+                        yield s;
+                    }
+                    yield storedValue.toString();
+                }
+                default -> storedValue;
+            };
+        } catch (Exception e) {
+            // API should not leak raw JSON parsing errors.
+            log.warn("Failed to normalize setting value for API, key={}.{} type={}. Error={}",
+                    settingCategoryPlaceholder(), settingKeyPlaceholder(), valueType, e.getMessage());
+            return storedValue;
+        }
+    }
+
+    private String settingCategoryPlaceholder() {
+        return "?";
+    }
+
+    private String settingKeyPlaceholder() {
+        return "?";
+    }
+
+    private Boolean coerceBoolean(Object value) {
+        if (value instanceof Boolean b) {
+            return b;
+        }
+        if (value instanceof String s) {
+            String normalized = s.trim();
+            if (normalized.equalsIgnoreCase("true")) return true;
+            if (normalized.equalsIgnoreCase("false")) return false;
+        }
+        throw new IllegalArgumentException("Invalid boolean setting value");
+    }
+
+    private Integer coerceInteger(Object value) {
+        if (value instanceof Integer i) {
+            return i;
+        }
+        if (value instanceof Number n) {
+            return n.intValue();
+        }
+        if (value instanceof String s) {
+            try {
+                return Integer.parseInt(s.trim());
+            } catch (NumberFormatException ignored) {
+                throw new IllegalArgumentException("Invalid integer setting value");
             }
-            default -> value.toString();
-        };
+        }
+        throw new IllegalArgumentException("Invalid integer setting value");
+    }
+
+    private boolean looksLikeJson(String s) {
+        if (s == null) return false;
+        String t = s.trim();
+        return t.startsWith("{") || t.startsWith("[") || t.startsWith("\"") || t.equals("null") || t.equals("true") || t.equals("false");
+    }
+
+    private boolean looksLikeJsonStringLiteral(String s) {
+        if (s == null) return false;
+        String t = s.trim();
+        return t.startsWith("\"") && t.endsWith("\"");
     }
 }
