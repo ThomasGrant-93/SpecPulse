@@ -1,66 +1,83 @@
+# syntax=docker/dockerfile:1.7
+
 # ===========================================
-# Stage 1: Build Backend (Java)
+# Stage 1: Backend dependency warmup
+# (Gradle build files only; cached until Gradle config changes)
 # ===========================================
-FROM eclipse-temurin:17-jdk-alpine AS backend-builder
+FROM eclipse-temurin:17-jdk-alpine AS backend-deps
 
 WORKDIR /app
 
-# Copy Gradle wrapper and configuration files
+# Gradle wrapper and build scripts required for dependency resolution
 COPY gradlew gradlew
 COPY gradle gradle
 COPY settings.gradle settings.gradle
 COPY build.gradle build.gradle
 COPY specpulse-backend/build.gradle specpulse-backend/build.gradle
 
-# Create empty directories to satisfy Gradle
-RUN mkdir -p specpulse-frontend
-RUN mkdir -p specpulse-backend/src/main/resources/static
+# Some Gradle configuration references frontend/static paths.
+RUN mkdir -p specpulse-frontend \
+    && mkdir -p specpulse-backend/src/main/resources/static
 
-# Make gradlew executable
 RUN chmod +x gradlew
 
-# Download dependencies (cached layer for faster rebuilds)
-RUN ./gradlew :specpulse-backend:dependencies --no-daemon
-
-# Copy backend source code
-COPY specpulse-backend/src specpulse-backend/src
+# Download Gradle dependencies.
+# BuildKit cache mount keeps Gradle User Home between builds.
+RUN --mount=type=cache,target=/root/.gradle \
+    ./gradlew :specpulse-backend:dependencies --no-daemon
 
 # ===========================================
-# Stage 2: Build Frontend (Node.js)
+# Stage 2: Frontend dependencies (npm ci)
+# (Reinstalled only when package.json / package-lock.json change)
 # ===========================================
-FROM node:20-alpine AS frontend-builder
+FROM node:20-alpine AS frontend-deps
 
 WORKDIR /app
 
-# Copy package files
+ENV npm_config_cache=/root/.npm
+
+# Copy only files needed for npm dependency installation
 COPY specpulse-frontend/package.json specpulse-frontend/package-lock.json* ./
 
-# Install dependencies
-RUN npm ci
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci
 
-# Copy frontend source
+# ===========================================
+# Stage 3: Frontend build
+# (Source changes invalidate this stage only)
+# ===========================================
+FROM node:20-alpine AS frontend-build
+
+WORKDIR /app
+
+# Reuse node_modules from dependency stage
+COPY --from=frontend-deps /app/node_modules ./node_modules
+
+# Copy frontend sources
 COPY specpulse-frontend/ ./
 
-# Build frontend
 RUN npm run build
 
 # ===========================================
-# Stage 3: Final Backend Build with Static
+# Stage 4: Backend build (bootJar + embedded frontend)
 # ===========================================
-FROM eclipse-temurin:17-jdk-alpine AS backend-final
+FROM eclipse-temurin:17-jdk-alpine AS backend-build
 
 WORKDIR /app
 
-# Copy everything from backend-builder
-COPY --from=backend-builder /app .
+# Bring in Gradle build scripts and wrapper
+COPY --from=backend-deps /app .
 
-# Copy frontend build to static resources
-COPY --from=frontend-builder /app/dist specpulse-backend/src/main/resources/static
+# Copy backend sources only after dependency warmup
+COPY specpulse-backend/src specpulse-backend/src
 
-# Rebuild JAR with static files
-RUN ./gradlew :specpulse-backend:bootJar --no-daemon
+# Copy built frontend to backend static resources
+COPY --from=frontend-build /app/dist specpulse-backend/src/main/resources/static
 
-# Resolve and normalize the runnable JAR path for runtime stage
+RUN --mount=type=cache,target=/root/.gradle \
+    ./gradlew :specpulse-backend:bootJar --no-daemon
+
+# Normalize JAR output for the runtime stage
 RUN set -eu; \
     BOOT_JAR=""; \
     BOOT_JAR_COUNT=0; \
@@ -74,34 +91,26 @@ RUN set -eu; \
     cp "$BOOT_JAR" /app/app.jar
 
 # ===========================================
-# Stage 4: Runtime (JRE only)
+# Stage 5: Runtime (JRE only, non-root)
 # ===========================================
 FROM eclipse-temurin:17-jre-alpine
 
 WORKDIR /app
 
-# Create non-root user for security
-RUN addgroup -g 1001 appgroup && \
-    adduser -u 1001 -G appgroup -D appuser
+RUN addgroup -g 1001 appgroup \
+    && adduser -u 1001 -G appgroup -D appuser
 
-# Copy backend JAR from final builder
-COPY --from=backend-final /app/app.jar app.jar
+COPY --from=backend-build /app/app.jar app.jar
 
-# Set ownership
 RUN chown -R appuser:appgroup /app
 
-# Switch to non-root user
 USER appuser
 
-# Expose port
 EXPOSE 8080
 
-# Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
     CMD wget -qO- http://localhost:8080/actuator/health || exit 1
 
-# JVM options for containers
 ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -Djava.security.egd=file:/dev/./urandom"
 
-# Run application
 ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
