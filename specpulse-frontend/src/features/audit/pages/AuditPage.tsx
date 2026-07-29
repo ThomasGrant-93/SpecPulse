@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { auditApi } from '@/services/api';
+import { auditApi } from '@/features/audit/api';
 import { usePagination } from '@/hooks';
 
 const EVENT_TYPES = [
@@ -27,15 +27,13 @@ export default function AuditPage() {
         },
     });
 
-    // Filter logs
     const filteredLogs = useMemo(() => {
         return logs.filter((log) => {
             const matchesType = selectedEventType === 'ALL' || log.eventType === selectedEventType;
             const matchesSearch =
                 searchQuery === '' ||
                 log.eventType.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                (log.eventDetails &&
-                    log.eventDetails.toLowerCase().includes(searchQuery.toLowerCase()));
+                (log.eventDetails && log.eventDetails.toLowerCase().includes(searchQuery.toLowerCase()));
             return matchesType && matchesSearch;
         });
     }, [logs, selectedEventType, searchQuery]);
@@ -52,15 +50,9 @@ export default function AuditPage() {
     } = usePagination(filteredLogs, { initialPage: 1, initialPageSize: 20 });
 
     const getEventColor = (eventType: string) => {
-        if (eventType.includes('FAILED') || eventType.includes('ERROR')) {
-            return 'bg-red-100 text-red-800';
-        }
-        if (eventType.includes('BREAKING')) {
-            return 'bg-orange-100 text-orange-800';
-        }
-        if (eventType.includes('CREATED')) {
-            return 'bg-green-100 text-green-800';
-        }
+        if (eventType.includes('FAILED') || eventType.includes('ERROR')) return 'bg-red-100 text-red-800';
+        if (eventType.includes('BREAKING')) return 'bg-orange-100 text-orange-800';
+        if (eventType.includes('CREATED')) return 'bg-green-100 text-green-800';
         return 'bg-gray-100 text-gray-800';
     };
 
@@ -73,12 +65,9 @@ export default function AuditPage() {
             <h1 className="text-2xl font-semibold text-gray-900">Audit Log</h1>
             <p className="mt-2 text-sm text-gray-600">System events and history</p>
 
-            {/* Filters */}
             <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
-                    <label htmlFor="eventType" className="block text-sm font-medium text-gray-700">
-                        Filter by Event Type
-                    </label>
+                    <label htmlFor="eventType" className="block text-sm font-medium text-gray-700">Filter by Event Type</label>
                     <select
                         id="eventType"
                         value={selectedEventType}
@@ -92,10 +81,9 @@ export default function AuditPage() {
                         ))}
                     </select>
                 </div>
+
                 <div>
-                    <label htmlFor="search" className="block text-sm font-medium text-gray-700">
-                        Search
-                    </label>
+                    <label htmlFor="search" className="block text-sm font-medium text-gray-700">Search</label>
                     <input
                         type="text"
                         id="search"
@@ -107,13 +95,11 @@ export default function AuditPage() {
                 </div>
             </div>
 
-            {/* Results summary */}
             <div className="mt-4 flex items-center justify-between">
                 <p className="text-sm text-gray-600">
-                    Showing <span className="font-medium">{filteredLogs.length}</span> of{' '}
-                    <span className="font-medium">{logs.length}</span> events
+                    Showing <span className="font-medium">{filteredLogs.length}</span> of <span className="font-medium">{logs.length}</span> events
                 </p>
-                {selectedEventType !== 'ALL' || searchQuery !== '' ? (
+                {(selectedEventType !== 'ALL' || searchQuery !== '') && (
                     <button
                         onClick={() => {
                             setSelectedEventType('ALL');
@@ -123,58 +109,39 @@ export default function AuditPage() {
                     >
                         Clear filters
                     </button>
-                ) : null}
+                )}
             </div>
 
-            {/* Table */}
             <div className="mt-4 overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg">
                 <table className="min-w-full divide-y divide-gray-300">
                     <thead className="bg-gray-50">
                         <tr>
-                            <th className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900">
-                                Event Type
-                            </th>
-                            <th className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                                Details
-                            </th>
-                            <th className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                                Timestamp
-                            </th>
+                            <th className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900">Event Type</th>
+                            <th className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Details</th>
+                            <th className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Timestamp</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200 bg-white">
                         {paginatedLogs.map((log) => (
                             <tr key={log.id}>
                                 <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm">
-                                    <span
-                                        className={`inline-flex rounded-full px-2 text-xs font-semibold ${getEventColor(log.eventType)}`}
-                                    >
+                                    <span className={`inline-flex rounded-full px-2 text-xs font-semibold ${getEventColor(log.eventType)}`}>
                                         {log.eventType}
                                     </span>
                                 </td>
-                                <td className="px-3 py-4 text-sm text-gray-500 max-w-md truncate">
-                                    {log.eventDetails || '-'}
-                                </td>
-                                <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                                    {new Date(log.createdAt).toLocaleString()}
-                                </td>
+                                <td className="px-3 py-4 text-sm text-gray-500 max-w-md truncate">{log.eventDetails || '-'}</td>
+                                <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{new Date(log.createdAt).toLocaleString()}</td>
                             </tr>
                         ))}
                     </tbody>
                 </table>
             </div>
 
-            {/* Pagination */}
             {totalItems > 0 && (
                 <div className="mt-6 flex items-center justify-between border-t border-gray-200 pt-4">
                     <div className="flex items-center gap-4">
                         <p className="text-sm text-gray-700">
-                            Showing <span className="font-medium">{(page - 1) * pageSize + 1}</span>{' '}
-                            to{' '}
-                            <span className="font-medium">
-                                {Math.min(page * pageSize, totalItems)}
-                            </span>{' '}
-                            of <span className="font-medium">{totalItems}</span> results
+                            Showing <span className="font-medium">{(page - 1) * pageSize + 1}</span> to <span className="font-medium">{Math.min(page * pageSize, totalItems)}</span> of <span className="font-medium">{totalItems}</span> results
                         </p>
                         <select
                             value={pageSize}
@@ -191,22 +158,14 @@ export default function AuditPage() {
                         <button
                             onClick={() => previousPage()}
                             disabled={page === 1}
-                            className={`rounded-md px-3 py-2 text-sm font-semibold ${
-                                page === 1
-                                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
-                            }`}
+                            className={`rounded-md px-3 py-2 text-sm font-semibold ${page === 1 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'}`}
                         >
                             Previous
                         </button>
                         <button
                             onClick={() => nextPage()}
                             disabled={page === totalPages}
-                            className={`rounded-md px-3 py-2 text-sm font-semibold ${
-                                page === totalPages
-                                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
-                            }`}
+                            className={`rounded-md px-3 py-2 text-sm font-semibold ${page === totalPages ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'}`}
                         >
                             Next
                         </button>

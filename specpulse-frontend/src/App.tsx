@@ -1,13 +1,17 @@
 import { Link, Route, Routes } from 'react-router-dom';
-import ServicesPage from './pages/ServicesPage';
-import ServiceDetailPage from './pages/ServiceDetailPage';
-import SpecDetailPage from './pages/SpecDetailPage';
-import DiffsPage from './pages/DiffsPage';
-import AuditPage from './pages/AuditPage';
-import GroupsPage from './pages/GroupsPage';
-import SettingsPage from './pages/SettingsPage';
+import ServicesPage from '@/features/registry/pages/ServicesPage';
+import ServiceDetailPage from '@/features/registry/pages/ServiceDetailPage';
+import SpecDetailPage from '@/features/spec/pages/SpecDetailPage';
+import DiffsPage from '@/features/diffs/pages/DiffsPage';
+import AuditPage from '@/features/audit/pages/AuditPage';
+import GroupsPage from '@/features/groups/pages/GroupsPage';
+import SettingsPage from '@/features/settings/pages/SettingsPage';
+import { useAuth } from '@/features/auth/useAuth';
+import LoginPage from '@/features/auth/pages/LoginPage';
 
 function App() {
+    const { user, logout } = useAuth();
+
     return (
         <div className="min-h-screen bg-gray-50">
             {/* Skip link for accessibility */}
@@ -59,6 +63,23 @@ function App() {
                             >
                                 Settings
                             </Link>
+                            {user ? (
+                                <button
+                                    type="button"
+                                    onClick={logout}
+                                    className="text-gray-600 hover:text-gray-900"
+                                >
+                                    Logout
+                                </button>
+                            ) : (
+                                <Link
+                                    to="/login"
+                                    className="text-gray-600 hover:text-gray-900"
+                                    aria-label="Login"
+                                >
+                                    Login
+                                </Link>
+                            )}
                         </nav>
                     </div>
                 </div>
@@ -77,6 +98,7 @@ function App() {
                     <Route path="/services/:id/spec" element={<SpecDetailPage />} />
                     <Route path="/services/:id/diffs" element={<DiffsPage />} />
                     <Route path="/audit" element={<AuditPage />} />
+                    <Route path="/login" element={<LoginPage />} />
                 </Routes>
             </main>
         </div>

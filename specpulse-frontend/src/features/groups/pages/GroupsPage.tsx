@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { groupsApi } from '@/services/api';
+import { groupsApi } from '@/features/groups/api';
 import type { CreateGroupRequest, ServiceGroup } from '@/types';
 import GroupTree from '@/components/GroupTree';
 import GroupForm from '@/components/GroupForm';
@@ -19,7 +19,6 @@ export default function GroupsPage() {
         },
     });
 
-    // Fetch detailed group info when a group is selected
     const { data: selectedGroupDetails } = useQuery({
         queryKey: ['group', selectedGroup?.id],
         queryFn: async () => {
@@ -92,8 +91,7 @@ export default function GroupsPage() {
                 <div className="sm:flex-auto">
                     <h1 className="text-2xl font-semibold text-gray-900">Service Groups</h1>
                     <p className="mt-2 text-sm text-gray-700">
-                        Organize your services into logical groups (environments, domains, teams,
-                        etc.)
+                        Organize your services into logical groups (environments, domains, teams, etc.)
                     </p>
                 </div>
                 <div className="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
@@ -111,7 +109,6 @@ export default function GroupsPage() {
             </div>
 
             <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
-                {/* Groups Tree */}
                 <div className="lg:col-span-2">
                     <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg">
                         <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
@@ -134,9 +131,7 @@ export default function GroupsPage() {
                                         />
                                     </svg>
                                     <p className="mt-4 text-gray-500">No groups yet</p>
-                                    <p className="mt-2 text-sm text-gray-400">
-                                        Create your first group to organize services
-                                    </p>
+                                    <p className="mt-2 text-sm text-gray-400">Create your first group to organize services</p>
                                 </div>
                             ) : (
                                 <GroupTree
@@ -151,7 +146,6 @@ export default function GroupsPage() {
                     </div>
                 </div>
 
-                {/* Group Details */}
                 <div>
                     <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg">
                         <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
@@ -162,105 +156,72 @@ export default function GroupsPage() {
                                 <div className="space-y-4">
                                     <div>
                                         <div className="flex items-center gap-2">
-                                            {selectedGroupDetails.icon && (
-                                                <span className="text-2xl">
-                                                    {selectedGroupDetails.icon}
-                                                </span>
-                                            )}
+                                            {selectedGroupDetails.icon && <span className="text-2xl">{selectedGroupDetails.icon}</span>}
                                             {selectedGroupDetails.color && (
                                                 <span
                                                     className="w-4 h-4 rounded-full"
-                                                    style={{
-                                                        backgroundColor: selectedGroupDetails.color,
-                                                    }}
+                                                    style={{ backgroundColor: selectedGroupDetails.color }}
                                                 />
                                             )}
-                                            <h3 className="text-lg font-semibold text-gray-900">
-                                                {selectedGroupDetails.name}
-                                            </h3>
+                                            <h3 className="text-lg font-semibold text-gray-900">{selectedGroupDetails.name}</h3>
                                         </div>
                                         {selectedGroupDetails.parentGroupName && (
                                             <p className="text-sm text-gray-500 mt-1">
                                                 Parent:{' '}
-                                                <span className="font-medium">
-                                                    {selectedGroupDetails.parentGroupName}
-                                                </span>
+                                                <span className="font-medium">{selectedGroupDetails.parentGroupName}</span>
                                             </p>
                                         )}
                                     </div>
 
                                     {selectedGroupDetails.description && (
                                         <div>
-                                            <h4 className="text-sm font-medium text-gray-700">
-                                                Description
-                                            </h4>
-                                            <p className="mt-1 text-sm text-gray-600">
-                                                {selectedGroupDetails.description}
-                                            </p>
+                                            <h4 className="text-sm font-medium text-gray-700">Description</h4>
+                                            <p className="mt-1 text-sm text-gray-600">{selectedGroupDetails.description}</p>
                                         </div>
                                     )}
 
                                     <div className="pt-4 border-t border-gray-200">
                                         <div className="flex items-center justify-between">
                                             <span className="text-sm text-gray-500">Services</span>
-                                            <span className="text-sm font-medium text-gray-900">
-                                                {selectedGroupDetails.serviceCount || 0}
-                                            </span>
+                                            <span className="text-sm font-medium text-gray-900">{selectedGroupDetails.serviceCount || 0}</span>
                                         </div>
                                     </div>
 
-                                    {selectedGroupDetails.services &&
-                                        selectedGroupDetails.services.length > 0 && (
-                                            <div className="pt-4 border-t border-gray-200">
-                                                <h4 className="text-sm font-semibold text-gray-700 mb-2">
-                                                    Members
-                                                </h4>
-                                                <div className="space-y-2">
-                                                    {selectedGroupDetails.services.map((svc) => (
-                                                        <div
-                                                            key={svc.id}
-                                                            className="flex items-center justify-between gap-3 bg-gray-50 rounded px-3 py-2"
-                                                        >
-                                                            <div className="min-w-0">
-                                                                <div className="font-medium text-gray-900 truncate">
-                                                                    {svc.name}
-                                                                </div>
-                                                                {svc.description && (
-                                                                    <div className="text-xs text-gray-600 truncate">
-                                                                        {svc.description}
-                                                                    </div>
-                                                                )}
-                                                                <div className="text-[11px] text-gray-500 font-mono truncate">
-                                                                    {svc.openApiUrl}
-                                                                </div>
-                                                            </div>
-                                                            <div className="flex items-center gap-2 flex-shrink-0">
-                                                                <span
-                                                                    className={`text-xs px-2 py-0.5 rounded-full ${
-                                                                        svc.enabled
-                                                                            ? 'bg-green-100 text-green-800'
-                                                                            : 'bg-gray-200 text-gray-700'
-                                                                    }`}
-                                                                >
-                                                                    {svc.enabled
-                                                                        ? 'Enabled'
-                                                                        : 'Disabled'}
-                                                                </span>
-                                                            </div>
+                                    {selectedGroupDetails.services && selectedGroupDetails.services.length > 0 && (
+                                        <div className="pt-4 border-t border-gray-200">
+                                            <h4 className="text-sm font-semibold text-gray-700 mb-2">Members</h4>
+                                            <div className="space-y-2">
+                                                {selectedGroupDetails.services.map((svc) => (
+                                                    <div
+                                                        key={svc.id}
+                                                        className="flex items-center justify-between gap-3 bg-gray-50 rounded px-3 py-2"
+                                                    >
+                                                        <div className="min-w-0">
+                                                            <div className="font-medium text-gray-900 truncate">{svc.name}</div>
+                                                            {svc.description && <div className="text-xs text-gray-600 truncate">{svc.description}</div>}
+                                                            <div className="text-[11px] text-gray-500 font-mono truncate">{svc.openApiUrl}</div>
                                                         </div>
-                                                    ))}
-                                                </div>
+                                                        <div className="flex items-center gap-2 flex-shrink-0">
+                                                            <span
+                                                                className={`text-xs px-2 py-0.5 rounded-full ${
+                                                                    svc.enabled
+                                                                        ? 'bg-green-100 text-green-800'
+                                                                        : 'bg-gray-200 text-gray-700'
+                                                                }`}
+                                                            >
+                                                                {svc.enabled ? 'Enabled' : 'Disabled'}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                ))}
                                             </div>
-                                        )}
+                                        </div>
+                                    )}
 
                                     <div className="pt-4 border-t border-gray-200">
                                         <div className="flex items-center justify-between">
                                             <span className="text-sm text-gray-500">Created</span>
-                                            <span className="text-sm text-gray-900">
-                                                {new Date(
-                                                    selectedGroupDetails.createdAt
-                                                ).toLocaleDateString()}
-                                            </span>
+                                            <span className="text-sm text-gray-900">{new Date(selectedGroupDetails.createdAt).toLocaleDateString()}</span>
                                         </div>
                                     </div>
 
@@ -289,9 +250,7 @@ export default function GroupsPage() {
                                         />
                                     </svg>
                                     <p className="mt-4 text-gray-500">Select a group</p>
-                                    <p className="mt-2 text-sm text-gray-400">
-                                        Click on a group to view details
-                                    </p>
+                                    <p className="mt-2 text-sm text-gray-400">Click on a group to view details</p>
                                 </div>
                             )}
                         </div>
