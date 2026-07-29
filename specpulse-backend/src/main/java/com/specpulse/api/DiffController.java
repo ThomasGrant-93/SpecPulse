@@ -3,8 +3,6 @@ package com.specpulse.api;
 import com.specpulse.diff.DiffResultDTO;
 import com.specpulse.diff.DiffService;
 import com.specpulse.diff.SpecDiffDTO;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,15 +14,8 @@ public class DiffController {
 
     private final DiffService diffService;
 
-    // If configured (non-empty), requires Authorization: Bearer <token> for diff comparison.
-    private final String authToken;
-
-    public DiffController(
-            DiffService diffService,
-            @Value("${specpulse.auth.token:}") String authToken
-    ) {
+    public DiffController(DiffService diffService) {
         this.diffService = diffService;
-        this.authToken = authToken;
     }
 
     @GetMapping("/service/{serviceId}")
@@ -39,20 +30,8 @@ public class DiffController {
 
     @PostMapping("/compare")
     public ResponseEntity<DiffResultDTO> compareSpecs(
-            @RequestBody CompareSpecsRequest request,
-            @RequestHeader(name = "Authorization", required = false) String authorization
+            @RequestBody CompareSpecsRequest request
     ) {
-        if (authToken != null && !authToken.isBlank()) {
-            if (authorization == null || !authorization.startsWith("Bearer ")) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-            }
-
-            String token = authorization.substring("Bearer ".length()).trim();
-            if (!authToken.equals(token)) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-            }
-        }
-
         DiffResultDTO result = diffService.compare(request.oldSpec(), request.newSpec());
         return ResponseEntity.ok(result);
     }

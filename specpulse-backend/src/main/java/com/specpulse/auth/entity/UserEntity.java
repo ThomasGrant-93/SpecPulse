@@ -1,4 +1,4 @@
-package com.specpulse.auth;
+package com.specpulse.auth.entity;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
@@ -15,20 +15,23 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Table(name = "roles")
+@Table(name = "users")
 @Getter
 @Setter
-public class RoleEntity {
+public class UserEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false, unique = true, length = 255)
-    private String name;
+    private String username;
 
-    @Column(columnDefinition = "TEXT")
-    private String description;
+    @Column(length = 255, unique = true)
+    private String email;
+
+    @Column(name = "password_hash", nullable = false, length = 255)
+    private String passwordHash;
 
     @Column(nullable = false)
     private boolean enabled = true;
@@ -50,9 +53,9 @@ public class RoleEntity {
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
-            name = "role_permissions",
-            joinColumns = @JoinColumn(name = "role_id"),
-            inverseJoinColumns = @JoinColumn(name = "permission_id")
+            name = "user_roles",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id")
     )
-    private Set<PermissionEntity> permissions = new HashSet<>();
+    private Set<RoleEntity> roles = new HashSet<>();
 }

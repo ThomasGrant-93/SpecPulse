@@ -6,6 +6,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 
 @Controller
 public class FrontendSpaController {
@@ -21,7 +22,7 @@ public class FrontendSpaController {
             "/settings",
             "/audit"
     })
-    public ResponseEntity<Resource> index() {
+    public ResponseEntity<Resource> index(@PathVariable(name = "id", required = false) String id) {
         // Serve the already-built Vite React application.
         return ResponseEntity.ok()
                 .contentType(MediaType.TEXT_HTML)

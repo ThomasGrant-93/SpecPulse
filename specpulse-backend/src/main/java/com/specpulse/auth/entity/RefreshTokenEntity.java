@@ -1,4 +1,4 @@
-package com.specpulse.auth;
+package com.specpulse.auth.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -9,26 +9,27 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "permissions")
+@Table(name = "refresh_tokens")
 @Getter
 @Setter
-public class PermissionEntity {
+public class RefreshTokenEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true, length = 255)
-    private String name;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "user_id", nullable = false)
+    private UserEntity user;
 
-    @Column(columnDefinition = "TEXT")
-    private String description;
+    @Column(name = "token_hash", nullable = false, unique = true, length = 64)
+    private String tokenHash;
 
-    @Column(nullable = false)
-    private boolean enabled = true;
+    @Column(name = "revoked_at")
+    private LocalDateTime revokedAt;
 
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
+    @Column(name = "expires_at", nullable = false)
+    private LocalDateTime expiresAt;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

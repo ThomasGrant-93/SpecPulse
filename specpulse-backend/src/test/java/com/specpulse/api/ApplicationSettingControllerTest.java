@@ -1,6 +1,9 @@
 package com.specpulse.api;
 
 import com.specpulse.api.mapper.ApplicationSettingApiMapper;
+import com.specpulse.auth.repository.UserRepository;
+import com.specpulse.auth.security.JwtService;
+import com.specpulse.test.JwtTestUtil;
 import com.specpulse.settings.ApplicationSettingService;
 import com.specpulse.settings.SettingUpdateCommand;
 import org.junit.jupiter.api.DisplayName;
@@ -24,20 +27,32 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(com.specpulse.settings.ApplicationSettingController.class)
-@Import(ApplicationSettingApiMapper.class)
+@Import({ApplicationSettingApiMapper.class, com.specpulse.config.SecurityConfig.class})
 @SuppressWarnings("removal")
 class ApplicationSettingControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
+    @Autowired
+    private JwtService jwtService;
+
     @MockBean
     private ApplicationSettingService settingService;
+
+    @MockBean
+    private UserRepository userRepository;
+
+    private String adminToken;
 
     @SuppressWarnings("unchecked")
     @Test
     @DisplayName("Should map valid keys and skip invalid in bulk update")
     void shouldMapValidKeysAndSkipInvalidInBulkUpdate() throws Exception {
+        long userId = 1L;
+        JwtTestUtil.stubEnabledAdmin(userRepository, userId);
+        adminToken = JwtTestUtil.adminAccessToken(jwtService, userId);
+
         given(settingService.updateSettings(any())).willReturn(List.of());
 
         String requestBody = """
@@ -51,6 +66,7 @@ class ApplicationSettingControllerTest {
                 """;
 
         mockMvc.perform(patch("/api/v1/settings")
+                        .header("Authorization", "Bearer " + adminToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
                 .andExpect(status().isOk());
@@ -70,9 +86,14 @@ class ApplicationSettingControllerTest {
     @Test
     @DisplayName("Should update single setting")
     void shouldUpdateSingleSetting() throws Exception {
+        long userId = 1L;
+        JwtTestUtil.stubEnabledAdmin(userRepository, userId);
+        adminToken = JwtTestUtil.adminAccessToken(jwtService, userId);
+
         given(settingService.updateSetting("general", "theme", "light")).willReturn(null);
 
         mockMvc.perform(put("/api/v1/settings/general/theme")
+                        .header("Authorization", "Bearer " + adminToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"value\":\"light\"}"))
                 .andExpect(status().isOk());

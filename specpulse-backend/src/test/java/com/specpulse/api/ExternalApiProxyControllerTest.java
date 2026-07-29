@@ -2,14 +2,17 @@ package com.specpulse.api;
 
 import com.specpulse.proxy.ExternalApiProxyResponse;
 import com.specpulse.proxy.ExternalApiProxyService;
+import com.specpulse.auth.repository.UserRepository;
+import com.specpulse.auth.security.JwtService;
+import com.specpulse.test.JwtTestUtil;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.context.annotation.Import;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
@@ -18,18 +21,32 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(ExternalApiProxyController.class)
-@TestPropertySource(properties = "specpulse.auth.token=test-token")
+@Import(com.specpulse.config.SecurityConfig.class)
 class ExternalApiProxyControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
+    @Autowired
+    private JwtService jwtService;
+
     @MockBean
     private ExternalApiProxyService proxyService;
+
+    @MockBean
+    private UserRepository userRepository;
+
+    private void stubAdminAndGetAuth(long userId) {
+        JwtTestUtil.stubEnabledAdmin(userRepository, userId);
+    }
 
     @Test
     @DisplayName("Should return 502 when proxyService reports status=0")
     void shouldReturn502OnProxyFailure() throws Exception {
+        long userId = 1L;
+        stubAdminAndGetAuth(userId);
+        String token = JwtTestUtil.adminAccessToken(jwtService, userId);
+
         given(proxyService.proxy(any())).willReturn(
                 new ExternalApiProxyResponse(0, "ERROR", java.util.Map.of(), null, "boom")
         );
@@ -37,7 +54,7 @@ class ExternalApiProxyControllerTest {
         String requestJson = "{\"url\":\"https://example.com\",\"method\":\"GET\",\"headers\":{},\"body\":null}";
 
         mockMvc.perform(post("/api/v1/tests/proxy")
-                        .header("Authorization", "Bearer test-token")
+                        .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestJson))
                 .andExpect(status().isBadGateway())
@@ -48,6 +65,10 @@ class ExternalApiProxyControllerTest {
     @Test
     @DisplayName("Should return 200 when proxyService returns a real upstream status")
     void shouldReturn200OnProxySuccessResponse() throws Exception {
+        long userId = 1L;
+        stubAdminAndGetAuth(userId);
+        String token = JwtTestUtil.adminAccessToken(jwtService, userId);
+
         given(proxyService.proxy(any())).willReturn(
                 new ExternalApiProxyResponse(404, "Not Found", java.util.Map.of(), null, null)
         );
@@ -55,7 +76,7 @@ class ExternalApiProxyControllerTest {
         String requestJson = "{\"url\":\"https://example.com\",\"method\":\"GET\",\"headers\":{},\"body\":null}";
 
         mockMvc.perform(post("/api/v1/tests/proxy")
-                        .header("Authorization", "Bearer test-token")
+                        .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestJson))
                 .andExpect(status().isOk())
@@ -65,8 +86,6 @@ class ExternalApiProxyControllerTest {
     @Test
     @DisplayName("Should return 401 when proxy auth token is configured but Authorization header is missing")
     void shouldReturn401WhenProxyAuthMissing() throws Exception {
-        // This test relies on controller property override via @TestPropertySource.
-        // We'll keep the service call from happening by expecting 401.
         String requestJson = "{\"url\":\"https://example.com\",\"method\":\"GET\",\"headers\":{},\"body\":null}";
 
         mockMvc.perform(post("/api/v1/tests/proxy")
@@ -90,6 +109,10 @@ class ExternalApiProxyControllerTest {
     @Test
     @DisplayName("Should allow proxy when Authorization header matches configured Bearer token")
     void shouldAllowProxyWhenProxyAuthMatches() throws Exception {
+        long userId = 1L;
+        stubAdminAndGetAuth(userId);
+        String token = JwtTestUtil.adminAccessToken(jwtService, userId);
+
         given(proxyService.proxy(any())).willReturn(
                 new ExternalApiProxyResponse(200, "OK", java.util.Map.of(), null, null)
         );
@@ -97,7 +120,7 @@ class ExternalApiProxyControllerTest {
         String requestJson = "{\"url\":\"https://example.com\",\"method\":\"GET\",\"headers\":{},\"body\":null}";
 
         mockMvc.perform(post("/api/v1/tests/proxy")
-                        .header("Authorization", "Bearer test-token")
+                        .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestJson))
                 .andExpect(status().isOk())

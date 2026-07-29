@@ -3,6 +3,9 @@ package com.specpulse.api;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.specpulse.api.mapper.RegistryApiMapper;
 import com.specpulse.registry.RegistryService;
+import com.specpulse.auth.repository.UserRepository;
+import com.specpulse.auth.security.JwtService;
+import com.specpulse.test.JwtTestUtil;
 import com.specpulse.registry.ServiceDTO;
 import com.specpulse.registry.ServiceValidationRequest;
 import com.specpulse.registry.ServiceValidationResult;
@@ -14,6 +17,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.context.annotation.Import;
 
 import java.util.List;
 
@@ -26,6 +30,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(RegistryController.class)
+@Import(com.specpulse.config.SecurityConfig.class)
 @SuppressWarnings("removal")
 class RegistryControllerTest {
 
@@ -35,16 +40,28 @@ class RegistryControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private JwtService jwtService;
+
     @MockBean
     private RegistryService registryService;
 
     @MockBean
     private RegistryApiMapper registryApiMapper;
 
+    @MockBean
+    private UserRepository userRepository;
+
+    private String adminToken;
+
     private ServiceDTO testService;
 
     @BeforeEach
     void setUp() {
+        long userId = 1L;
+        JwtTestUtil.stubEnabledAdmin(userRepository, userId);
+        adminToken = JwtTestUtil.adminAccessToken(jwtService, userId);
+
         testService = new ServiceDTO(
                 1L,
                 "test-service",
@@ -131,6 +148,7 @@ class RegistryControllerTest {
 
         // When & Then
         mockMvc.perform(post("/api/v1/registry")
+                        .header("Authorization", "Bearer " + adminToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -151,6 +169,7 @@ class RegistryControllerTest {
 
         // When & Then
         mockMvc.perform(post("/api/v1/registry")
+                        .header("Authorization", "Bearer " + adminToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidRequest)))
                 .andExpect(status().isBadRequest());
@@ -173,6 +192,7 @@ class RegistryControllerTest {
 
         // When & Then
         mockMvc.perform(post("/api/v1/registry")
+                        .header("Authorization", "Bearer " + adminToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isConflict());
@@ -205,6 +225,7 @@ class RegistryControllerTest {
 
         // When & Then
         mockMvc.perform(put("/api/v1/registry/1")
+                        .header("Authorization", "Bearer " + adminToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -218,7 +239,8 @@ class RegistryControllerTest {
         doNothing().when(registryService).deleteService(1L);
 
         // When & Then
-        mockMvc.perform(delete("/api/v1/registry/1"))
+        mockMvc.perform(delete("/api/v1/registry/1")
+                        .header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isNoContent());
     }
 
@@ -266,6 +288,7 @@ class RegistryControllerTest {
 
         // When & Then
         mockMvc.perform(post("/api/v1/registry/validate")
+                        .header("Authorization", "Bearer " + adminToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())

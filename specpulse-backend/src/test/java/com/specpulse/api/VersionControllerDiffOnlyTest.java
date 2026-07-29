@@ -2,6 +2,7 @@ package com.specpulse.api;
 
 import com.specpulse.version.SpecVersionDTO;
 import com.specpulse.version.VersionService;
+import com.specpulse.auth.repository.UserRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,6 +10,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.context.annotation.Import;
 
 import java.time.Instant;
 
@@ -22,6 +24,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(VersionController.class)
 @SuppressWarnings("removal")
+@Import(com.specpulse.config.SecurityConfig.class)
 class VersionControllerDiffOnlyTest {
 
     @Autowired
@@ -29,6 +32,9 @@ class VersionControllerDiffOnlyTest {
 
     @MockBean
     private VersionService versionService;
+
+    @MockBean
+    private UserRepository userRepository;
 
     @Test
     @DisplayName("Should return 400 when diff_only is set but compare_to is missing")
