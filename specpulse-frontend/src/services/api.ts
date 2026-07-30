@@ -1,11 +1,15 @@
 import axios, { type AxiosError } from 'axios';
 import { authService } from '@/features/auth/authApi';
 import { clearTokens, getAccessToken, getRefreshToken, setTokens } from '@/features/auth/tokenStore';
+import { isTestEnvironment } from '@/utils/testEnv';
 import type {
     ApplicationSetting,
     AuditLog,
+    AdminRole,
+    AdminUser,
     CreateGroupRequest,
     CreateServiceRequest,
+    CreateAdminUserRequest,
     PullResult,
     Service,
     ServiceGroup,
@@ -13,11 +17,14 @@ import type {
     SettingValue,
     SpecDiff,
     SpecVersion,
+    UpdateAdminUserRequest,
     UpdateGroupRequest,
     UpdateServiceRequest,
 } from '@/types';
 
 const API_BASE = '/api/v1';
+
+const isTestEnv = isTestEnvironment();
 
 export const api = axios.create({
     baseURL: API_BASE,
@@ -42,7 +49,7 @@ api.interceptors.request.use(
             } as any;
         }
 
-        if (import.meta.env.DEV) {
+        if (import.meta.env.DEV && !isTestEnv) {
             console.warn('[API Request]', config.method?.toUpperCase(), config.url, {
                 params: config.params,
                 data: config.data,
@@ -51,7 +58,7 @@ api.interceptors.request.use(
         return config;
     },
     (error) => {
-        if (import.meta.env.DEV) {
+        if (import.meta.env.DEV && !isTestEnv) {
             console.error('[API Request Error]', error.message);
         }
         return Promise.reject(error);
@@ -66,7 +73,7 @@ type RetryAxiosRequestConfig = Parameters<typeof api.request>[0] & { __authRetry
 api.interceptors.response.use(
     (response) => response,
     (error: AxiosError) => {
-        if (import.meta.env.DEV) {
+        if (import.meta.env.DEV && !isTestEnv) {
             console.error('[API Response Error]', {
                 status: error.response?.status,
                 statusText: error.response?.statusText,
@@ -118,12 +125,12 @@ api.interceptors.response.use(
 
         // Handle 403 Forbidden
         if (error.response?.status === 403) {
-            console.warn('[API] Forbidden access');
+            if (!isTestEnv) console.warn('[API] Forbidden access');
         }
 
         // Handle 500 Internal Server Error
         if (error.response?.status === 500) {
-            console.error('[API] Internal server error');
+            if (!isTestEnv) console.error('[API] Internal server error');
         }
 
         return Promise.reject(error);
@@ -205,6 +212,20 @@ export const settingsApi = {
     updateBulk: (updates: Record<string, SettingValue>) =>
         api.patch<ApplicationSetting[]>('/settings', updates),
     getCategories: () => api.get<string[]>('/settings/categories'),
+};
+
+// Admin API (user/role management)
+export const adminUsersApi = {
+    list: () => api.get<AdminUser[]>('/admin/users'),
+    getById: (id: number) => api.get<AdminUser>(`/admin/users/${id}`),
+    create: (data: CreateAdminUserRequest) => api.post<AdminUser>('/admin/users', data),
+    update: (id: number, data: UpdateAdminUserRequest) =>
+        api.put<AdminUser>(`/admin/users/${id}`, data),
+    delete: (id: number) => api.delete(`/admin/users/${id}`),
+};
+
+export const adminRolesApi = {
+    listEnabled: () => api.get<AdminRole[]>('/admin/roles'),
 };
 
 export default api;

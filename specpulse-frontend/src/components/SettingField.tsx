@@ -28,7 +28,7 @@ export default function SettingField({
                         type="checkbox"
                         checked={Boolean(value)}
                         onChange={(e) => onChange(e.target.checked)}
-                        className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        className="h-4 w-4 rounded border-gray-300 dark:border-gray-700 text-blue-600 focus:ring-blue-500"
                         disabled={!setting.isEditable || isSaving}
                     />
                 );
@@ -42,7 +42,7 @@ export default function SettingField({
                             const num = parseInt(e.target.value, 10);
                             onChange(isNaN(num) ? '' : num);
                         }}
-                        className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
+                        className="w-full rounded-md border-gray-300 bg-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2 dark:bg-gray-900 dark:text-gray-100 dark:border-gray-700"
                         disabled={!setting.isEditable || isSaving}
                     />
                 );
@@ -66,7 +66,7 @@ export default function SettingField({
                                 }
                             }}
                             rows={3}
-                            className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2 font-mono"
+                            className="w-full rounded-md border-gray-300 bg-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2 font-mono dark:bg-gray-900 dark:text-gray-100 dark:border-gray-700"
                             disabled={!setting.isEditable || isSaving}
                             placeholder='["item1", "item2"]'
                         />
@@ -82,7 +82,7 @@ export default function SettingField({
                         <select
                             value={typeof value === 'string' ? value : ''}
                             onChange={(e) => onChange(e.target.value)}
-                            className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
+                            className="w-full rounded-md border-gray-300 bg-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2 dark:bg-gray-900 dark:text-gray-100 dark:border-gray-700"
                             disabled={!setting.isEditable || isSaving}
                         >
                             <option value="light">Light</option>
@@ -96,7 +96,7 @@ export default function SettingField({
                         <select
                             value={typeof value === 'string' ? value : ''}
                             onChange={(e) => onChange(e.target.value)}
-                            className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
+                            className="w-full rounded-md border-gray-300 bg-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2 dark:bg-gray-900 dark:text-gray-100 dark:border-gray-700"
                             disabled={!setting.isEditable || isSaving}
                         >
                             <option value="internal">Internal</option>
@@ -113,7 +113,7 @@ export default function SettingField({
                                 type="text"
                                 value={typeof value === 'string' ? value : ''}
                                 onChange={(e) => onChange(e.target.value)}
-                                className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2 font-mono"
+                                className="w-full rounded-md border-gray-300 bg-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2 font-mono dark:bg-gray-900 dark:text-gray-100 dark:border-gray-700"
                                 disabled={!setting.isEditable || isSaving}
                                 placeholder="0 0 */6 * * ?"
                             />
@@ -128,7 +128,7 @@ export default function SettingField({
                         type="text"
                         value={typeof value === 'string' ? value : ''}
                         onChange={(e) => onChange(e.target.value)}
-                        className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
+                        className="w-full rounded-md border-gray-300 bg-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2 dark:bg-gray-900 dark:text-gray-100 dark:border-gray-700"
                         disabled={!setting.isEditable || isSaving}
                     />
                 );
@@ -136,33 +136,33 @@ export default function SettingField({
     };
 
     return (
-        <div className="py-4 border-b border-gray-200 last:border-0">
+        <div className="py-4 border-b border-gray-200 dark:border-gray-700 last:border-0">
             <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                        <h4 className="text-sm font-medium text-gray-900">{setting.key}</h4>
+                        <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100">{setting.key}</h4>
                         {!setting.isEditable && (
-                            <span className="inline-flex items-center rounded-md bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600">
+                            <span className="inline-flex items-center rounded-md bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-300">
                                 System
                             </span>
                         )}
                         {setting.isPublic && (
-                            <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-600">
+                            <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-600 dark:bg-blue-900/20 dark:text-blue-200">
                                 Public
                             </span>
                         )}
                     </div>
                     {setting.description && (
-                        <p className="mt-1 text-sm text-gray-500">{setting.description}</p>
+                        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{setting.description}</p>
                     )}
-                    <p className="mt-1 text-xs text-gray-400">Type: {setting.valueType}</p>
+                    <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">Type: {setting.valueType}</p>
                 </div>
                 <div className="flex items-center gap-2">{renderInput()}</div>
             </div>
             <div className="mt-3 flex justify-end gap-2">
                 <button
                     onClick={onCancel}
-                    className="rounded-md bg-white px-3 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                    className="rounded-md bg-white px-3 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-100 dark:ring-gray-700 dark:hover:bg-gray-700"
                     disabled={isSaving}
                 >
                     Cancel

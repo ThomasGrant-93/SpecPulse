@@ -8,12 +8,15 @@ import GroupsPage from '@/features/groups/pages/GroupsPage';
 import SettingsPage from '@/features/settings/pages/SettingsPage';
 import { useAuth } from '@/features/auth/useAuth';
 import LoginPage from '@/features/auth/pages/LoginPage';
+import UsersPage from '@/features/users/pages/UsersPage';
+import ThemeInitializer from '@/components/ThemeInitializer';
 
 function App() {
-    const { user, logout } = useAuth();
+    const { user, logout, isAdmin } = useAuth();
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+            <ThemeInitializer />
             {/* Skip link for accessibility */}
             <a
                 href="#main-content"
@@ -22,10 +25,10 @@ function App() {
                 Skip to main content
             </a>
 
-            <header className="bg-white shadow" role="banner">
+            <header className="bg-white shadow dark:bg-gray-900" role="banner">
                 <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between">
-                        <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+                        <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
                             <Link to="/" className="hover:text-blue-600">
                                 <span aria-hidden="true">⚡</span> SpecPulse
                             </Link>
@@ -37,44 +40,53 @@ function App() {
                         >
                             <Link
                                 to="/"
-                                className="text-gray-600 hover:text-gray-900"
+                                className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
                                 aria-label="View all services"
                             >
                                 Services
                             </Link>
                             <Link
                                 to="/groups"
-                                className="text-gray-600 hover:text-gray-900"
+                                className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
                                 aria-label="Manage service groups"
                             >
                                 Groups
                             </Link>
                             <Link
                                 to="/audit"
-                                className="text-gray-600 hover:text-gray-900"
+                                className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
                                 aria-label="View audit logs"
                             >
                                 Audit
                             </Link>
                             <Link
                                 to="/settings"
-                                className="text-gray-600 hover:text-gray-900"
+                                className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
                                 aria-label="Open settings"
                             >
                                 Settings
                             </Link>
+                            {isAdmin && (
+                                <Link
+                                    to="/users"
+                                    className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
+                                    aria-label="Manage users"
+                                >
+                                    Users
+                                </Link>
+                            )}
                             {user ? (
                                 <button
                                     type="button"
                                     onClick={logout}
-                                    className="text-gray-600 hover:text-gray-900"
+                                    className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
                                 >
                                     Logout
                                 </button>
                             ) : (
                                 <Link
                                     to="/login"
-                                    className="text-gray-600 hover:text-gray-900"
+                                    className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
                                     aria-label="Login"
                                 >
                                     Login
@@ -87,7 +99,7 @@ function App() {
 
             <main
                 id="main-content"
-                className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8"
+                className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 text-gray-900 dark:text-gray-100"
                 role="main"
             >
                 <Routes>
@@ -99,6 +111,7 @@ function App() {
                     <Route path="/services/:id/diffs" element={<DiffsPage />} />
                     <Route path="/audit" element={<AuditPage />} />
                     <Route path="/login" element={<LoginPage />} />
+                    <Route path="/users" element={<UsersPage />} />
                 </Routes>
             </main>
         </div>

@@ -173,3 +173,31 @@ export interface MeResponse {
     permissions: string[];
     attributes: Record<string, unknown>;
 }
+
+export interface AdminUser {
+    id: number;
+    username: string;
+    email: string;
+    enabled: boolean;
+    roles: string[];
+}
+
+export interface AdminRole {
+    id: number;
+    name: string;
+    enabled: boolean;
+}
+
+export interface CreateAdminUserRequest {
+    username: string;
+    email: string;
+    password: string;
+    enabled: boolean;
+    roleNames: string[];
+}
+
+export interface UpdateAdminUserRequest {
+    email: string;
+    enabled: boolean;
+    roleNames: string[];
+}
