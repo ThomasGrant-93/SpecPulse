@@ -11,38 +11,38 @@ import java.util.Optional;
 public interface ApplicationSettingRepository extends JpaRepository<ApplicationSetting, Long> {
 
     /**
-     * Найти все настройки категории
+     * Find all settings for a category
      */
     List<ApplicationSetting> findByCategoryOrderByKeyAsc(String category);
 
     /**
-     * Найти все настройки
+     * Find all settings
      */
     List<ApplicationSetting> findAllByOrderByCategoryAscKeyAsc();
 
     /**
-     * Найти настройку по категории и ключу
+     * Find a setting by category and key
      */
     Optional<ApplicationSetting> findByCategoryAndKey(String category, String key);
 
     /**
-     * Найти публичные настройки категории
+     * Find public settings for a category
      */
     List<ApplicationSetting> findByCategoryAndIsPublicTrueOrderByKeyAsc(String category);
 
     /**
-     * Получить все категории настроек
+     * Get all settings categories
      */
     @Query("SELECT DISTINCT s.category FROM ApplicationSetting s ORDER BY s.category")
     List<String> findAllCategories();
 
     /**
-     * Проверить существование настройки
+     * Check whether a setting exists
      */
     boolean existsByCategoryAndKey(String category, String key);
 
     /**
-     * Найти редактируемые настройки
+     * Find editable settings
      */
     List<ApplicationSetting> findByIsEditableTrueOrderByCategoryAscKeyAsc();
 }

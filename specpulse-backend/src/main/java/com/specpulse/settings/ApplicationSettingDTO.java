@@ -26,7 +26,7 @@ public class ApplicationSettingDTO {
     private LocalDateTime updatedAt;
 
     /**
-     * DTO для группы настроек по категориям
+     * DTO for settings grouped by categories
      */
     @Data
     @Builder
@@ -40,7 +40,7 @@ public class ApplicationSettingDTO {
     }
 
     /**
-     * DTO для обновления настройки
+     * DTO for updating a setting
      */
     @Data
     @Builder
@@ -51,7 +51,7 @@ public class ApplicationSettingDTO {
     }
 
     /**
-     * DTO для массового обновления
+     * DTO for bulk updates
      */
     @Data
     @Builder

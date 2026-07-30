@@ -1,4 +1,6 @@
-import axios, { AxiosError, AxiosResponse } from 'axios';
+import { AxiosError, AxiosResponse } from 'axios';
+
+import { api } from './api';
 
 export interface TestRequest {
     url: string;
@@ -36,9 +38,9 @@ export const apiTester = {
         }
 
         try {
-            const response: AxiosResponse = await axios({
+            const response: AxiosResponse = await api.request({
                 method: 'post',
-                url: '/api/v1/tests/proxy',
+                url: '/tests/proxy',
                 headers: {
                     'Content-Type': 'application/json',
                 },

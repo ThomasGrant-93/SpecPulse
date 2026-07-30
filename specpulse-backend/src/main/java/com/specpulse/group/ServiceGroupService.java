@@ -22,7 +22,7 @@ public class ServiceGroupService {
     private final ServiceRepository serviceRepository;
 
     /**
-     * Получить все группы с иерархией
+     * Get all groups with hierarchy
      */
     public List<ServiceGroupDTO> getAllGroups() {
         List<ServiceGroup> allGroups = groupRepository.findAll();
@@ -30,7 +30,7 @@ public class ServiceGroupService {
     }
 
     /**
-     * Построить дерево групп с счетчиком сервисов
+     * Build a group tree with a service counter
      */
     private List<ServiceGroupDTO> buildGroupTreeWithServiceCount(List<ServiceGroup> allGroups, Long parentId) {
         return allGroups.stream()
@@ -49,7 +49,7 @@ public class ServiceGroupService {
     }
 
     /**
-     * Получить корневые группы
+     * Get root groups
      */
     public List<ServiceGroupDTO> getRootGroups() {
         List<ServiceGroup> rootGroups = groupRepository.findByParentGroupIsNullOrderBySortOrderAsc();
@@ -59,7 +59,7 @@ public class ServiceGroupService {
     }
 
     /**
-     * Получить группу по ID с сервисами
+     * Get group by ID with services
      */
     public ServiceGroupDTO getGroupById(Long id, boolean includeServices) {
         ServiceGroup group = groupRepository.findById(id)
@@ -79,11 +79,11 @@ public class ServiceGroupService {
     }
 
     /**
-     * Создать новую группу
+     * Create a new group
      */
     @Transactional
     public ServiceGroupDTO createGroup(CreateGroupRequest request) {
-        // Проверка на максимальную глубину вложенности (максимум 10 уровней)
+        // Check maximum nesting depth (max 10 levels)
         if (request.getParentGroupId() != null) {
             int depth = calculateDepth(request.getParentGroupId());
             if (depth >= 10) {
@@ -122,7 +122,7 @@ public class ServiceGroupService {
     }
 
     /**
-     * Вычислить глубину вложенности группы
+     * Calculate a group's nesting depth
      */
     private int calculateDepth(Long groupId) {
         int depth = 0;
@@ -137,14 +137,14 @@ public class ServiceGroupService {
     }
 
     /**
-     * Обновить группу
+     * Update a group
      */
     @Transactional
     public ServiceGroupDTO updateGroup(Long id, UpdateGroupRequest request) {
         ServiceGroup group = groupRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Group", id));
 
-        // Проверка на дублирование имени при изменении
+        // Check for duplicate name on update
         if (request.getName() != null && !request.getName().equals(group.getName())) {
             ServiceGroup parent = group.getParentGroup();
             if (groupRepository.existsByNameAndParentGroup(request.getName(), parent)) {
@@ -169,13 +169,13 @@ public class ServiceGroupService {
             group.setSortOrder(request.getSortOrder());
         }
 
-        // Обновление родителя
+        // Update parent
         if (request.getParentGroupId() != null &&
                 (group.getParentGroup() == null || !group.getParentGroup().getId().equals(request.getParentGroupId()))) {
 
             Long newParentId = request.getParentGroupId();
 
-            // Проверка на цикл - родитель не может быть потомком
+            // Cycle check - parent cannot be a descendant
             if (isDescendant(newParentId, id)) {
                 throw new IllegalArgumentException("Cannot set parent to a descendant of this group (would create a cycle)");
             }
@@ -184,7 +184,7 @@ public class ServiceGroupService {
                     .orElseThrow(() -> new ResourceNotFoundException("Parent group", newParentId));
             group.setParentGroup(newParent);
         } else if (request.getParentGroupId() == null && group.getParentGroup() != null) {
-            // Сделать корневой группой
+            // Set as a root group
             group.setParentGroup(null);
         }
 
@@ -195,7 +195,7 @@ public class ServiceGroupService {
     }
 
     /**
-     * Проверить, является ли потенциальный родитель потомком группы (для предотвращения циклов)
+     * Check whether the potential parent is a descendant of the group (to prevent cycles)
      */
     private boolean isDescendant(Long potentialParentId, Long groupId) {
         if (potentialParentId.equals(groupId)) {
@@ -219,14 +219,14 @@ public class ServiceGroupService {
     }
 
     /**
-     * Удалить группу
+     * Delete a group
      */
     @Transactional
     public void deleteGroup(Long id) {
         ServiceGroup group = groupRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Group", id));
 
-        // Проверка, что группа не содержит подгрупп
+        // Check that the group has no child groups
         if (!group.getChildGroups().isEmpty()) {
             throw new IllegalArgumentException("Cannot delete group with child groups. Move or delete child groups first.");
         }
@@ -236,7 +236,7 @@ public class ServiceGroupService {
     }
 
     /**
-     * Добавить сервисы в группу
+     * Add services to a group
      */
     @Transactional
     public ServiceGroupDTO addServicesToGroup(Long groupId, List<Long> serviceIds) {
@@ -260,7 +260,7 @@ public class ServiceGroupService {
     }
 
     /**
-     * Удалить сервис из группы
+     * Remove a service from a group
      */
     @Transactional
     public void removeServiceFromGroup(Long groupId, Long serviceId) {
@@ -278,7 +278,7 @@ public class ServiceGroupService {
     }
 
     /**
-     * Получить группы сервиса
+     * Get groups for a service
      */
     public List<ServiceGroupDTO> getServiceGroups(Long serviceId) {
         return serviceRepository.findById(serviceId)

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { auditApi } from '@/services/api';
+import { auditApi } from '@/features/audit/api';
 import { usePagination } from '@/hooks';
 
 const EVENT_TYPES = [
@@ -27,7 +27,6 @@ export default function AuditPage() {
         },
     });
 
-    // Filter logs
     const filteredLogs = useMemo(() => {
         return logs.filter((log) => {
             const matchesType = selectedEventType === 'ALL' || log.eventType === selectedEventType;
@@ -73,7 +72,6 @@ export default function AuditPage() {
             <h1 className="text-2xl font-semibold text-gray-900">Audit Log</h1>
             <p className="mt-2 text-sm text-gray-600">System events and history</p>
 
-            {/* Filters */}
             <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                     <label htmlFor="eventType" className="block text-sm font-medium text-gray-700">
@@ -92,6 +90,7 @@ export default function AuditPage() {
                         ))}
                     </select>
                 </div>
+
                 <div>
                     <label htmlFor="search" className="block text-sm font-medium text-gray-700">
                         Search
@@ -107,13 +106,12 @@ export default function AuditPage() {
                 </div>
             </div>
 
-            {/* Results summary */}
             <div className="mt-4 flex items-center justify-between">
                 <p className="text-sm text-gray-600">
                     Showing <span className="font-medium">{filteredLogs.length}</span> of{' '}
                     <span className="font-medium">{logs.length}</span> events
                 </p>
-                {selectedEventType !== 'ALL' || searchQuery !== '' ? (
+                {(selectedEventType !== 'ALL' || searchQuery !== '') && (
                     <button
                         onClick={() => {
                             setSelectedEventType('ALL');
@@ -123,10 +121,9 @@ export default function AuditPage() {
                     >
                         Clear filters
                     </button>
-                ) : null}
+                )}
             </div>
 
-            {/* Table */}
             <div className="mt-4 overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg">
                 <table className="min-w-full divide-y divide-gray-300">
                     <thead className="bg-gray-50">
@@ -164,7 +161,6 @@ export default function AuditPage() {
                 </table>
             </div>
 
-            {/* Pagination */}
             {totalItems > 0 && (
                 <div className="mt-6 flex items-center justify-between border-t border-gray-200 pt-4">
                     <div className="flex items-center gap-4">
@@ -191,22 +187,14 @@ export default function AuditPage() {
                         <button
                             onClick={() => previousPage()}
                             disabled={page === 1}
-                            className={`rounded-md px-3 py-2 text-sm font-semibold ${
-                                page === 1
-                                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
-                            }`}
+                            className={`rounded-md px-3 py-2 text-sm font-semibold ${page === 1 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'}`}
                         >
                             Previous
                         </button>
                         <button
                             onClick={() => nextPage()}
                             disabled={page === totalPages}
-                            className={`rounded-md px-3 py-2 text-sm font-semibold ${
-                                page === totalPages
-                                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
-                            }`}
+                            className={`rounded-md px-3 py-2 text-sm font-semibold ${page === totalPages ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'}`}
                         >
                             Next
                         </button>

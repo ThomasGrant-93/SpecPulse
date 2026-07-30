@@ -5,6 +5,7 @@ import userEvent from '@testing-library/user-event';
 import ApiEndpointTester from './ApiEndpointTester';
 import type { AnySpec, ApiEndpoint, AuthCredentialsMap } from '@/types/openapi';
 import { apiTester } from '@/services/apiTester';
+import { HeadersProvider } from '@/features/spec/HeadersProvider';
 
 vi.mock('@/services/apiTester', () => ({
     apiTester: {
@@ -17,6 +18,7 @@ const mockExecute = vi.mocked(apiTester.execute);
 describe('ApiEndpointTester auth', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        window.sessionStorage.clear();
     });
 
     it('applies global OAS3 bearer security to headers', async () => {
@@ -50,12 +52,15 @@ describe('ApiEndpointTester auth', () => {
         };
 
         render(
-            <ApiEndpointTester
-                endpoint={endpoint}
-                baseUrl={'https://example.com/'}
-                spec={spec}
-                authCredentials={authCredentials}
-            />
+            <HeadersProvider>
+                <ApiEndpointTester
+                    endpoint={endpoint}
+                    baseUrl={'https://example.com/'}
+                    spec={spec}
+                    authCredentials={authCredentials}
+                    canExecute={true}
+                />
+            </HeadersProvider>
         );
 
         const user = userEvent.setup();
@@ -109,12 +114,15 @@ describe('ApiEndpointTester auth', () => {
         };
 
         render(
-            <ApiEndpointTester
-                endpoint={endpoint}
-                baseUrl={'https://example.com/'}
-                spec={spec}
-                authCredentials={authCredentials}
-            />
+            <HeadersProvider>
+                <ApiEndpointTester
+                    endpoint={endpoint}
+                    baseUrl={'https://example.com/'}
+                    spec={spec}
+                    authCredentials={authCredentials}
+                    canExecute={true}
+                />
+            </HeadersProvider>
         );
 
         const user = userEvent.setup();
@@ -161,12 +169,15 @@ describe('ApiEndpointTester auth', () => {
         };
 
         render(
-            <ApiEndpointTester
-                endpoint={endpoint}
-                baseUrl={'https://example.com/'}
-                spec={spec}
-                authCredentials={authCredentials}
-            />
+            <HeadersProvider>
+                <ApiEndpointTester
+                    endpoint={endpoint}
+                    baseUrl={'https://example.com/'}
+                    spec={spec}
+                    authCredentials={authCredentials}
+                    canExecute={true}
+                />
+            </HeadersProvider>
         );
 
         const user = userEvent.setup();

@@ -53,7 +53,7 @@ public class ServiceGroup {
     private LocalDateTime updatedAt;
 
     /**
-     * Получить полный путь группы (например: "production/backend")
+     * Get the full group path (e.g. "production/backend")
      */
     public String getFullPath() {
         if (parentGroup == null) {
@@ -63,7 +63,7 @@ public class ServiceGroup {
     }
 
     /**
-     * Получить уровень вложенности
+     * Get the nesting level
      */
     public int getLevel() {
         if (parentGroup == null) {

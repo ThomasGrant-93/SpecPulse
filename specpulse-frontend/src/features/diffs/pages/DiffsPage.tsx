@@ -1,6 +1,6 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { diffsApi, registryApi, versionsApi } from '@/services/api';
+import { diffsApi, registryApi, versionsApi } from '@/features/diffs/api';
 import DiffViewer from '@/components/DiffViewer';
 import SideBySideDiff from '@/components/SideBySideDiff';
 import { useState } from 'react';
@@ -12,7 +12,6 @@ export default function DiffsPage() {
     const [selectedFromVersion, setSelectedFromVersion] = useState<number | null>(null);
     const [selectedToVersion, setSelectedToVersion] = useState<number | null>(null);
 
-    // Fetch spec content for selected versions
     const { data: fromVersionSpec } = useQuery({
         queryKey: ['version-spec', selectedFromVersion, selectedToVersion],
         queryFn: async () => {
@@ -70,7 +69,6 @@ export default function DiffsPage() {
 
     return (
         <div>
-            {/* Header */}
             <div className="mb-6">
                 <button
                     onClick={() => navigate(`/services/${serviceId}`)}
@@ -97,16 +95,15 @@ export default function DiffsPage() {
                 </div>
             </div>
 
-            {/* Compare Versions Section */}
             <div className="bg-white rounded-lg shadow p-6 mb-8">
                 <div className="flex items-center justify-between mb-4">
                     <h2 className="text-lg font-semibold text-gray-900">Compare Versions</h2>
                     <div className="flex items-center gap-2 text-sm text-gray-500">
                         <span className="flex items-center gap-1">
-                            <span className="w-2 h-2 rounded-full bg-red-400"></span> Old
+                            <span className="w-2 h-2 rounded-full bg-red-400" /> Old
                         </span>
                         <span className="flex items-center gap-1">
-                            <span className="w-2 h-2 rounded-full bg-green-400"></span> New
+                            <span className="w-2 h-2 rounded-full bg-green-400" /> New
                         </span>
                     </div>
                 </div>
@@ -217,13 +214,12 @@ export default function DiffsPage() {
                     selectedToVersion &&
                     (!fromVersionSpec || !toVersionSpec) && (
                         <div className="mt-4 text-center py-8">
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto" />
                             <p className="mt-2 text-gray-600">Loading spec content...</p>
                         </div>
                     )}
             </div>
 
-            {/* Historical Diffs */}
             <div className="bg-white rounded-lg shadow">
                 <div className="border-b px-6 py-4">
                     <h2 className="text-lg font-semibold text-gray-900">

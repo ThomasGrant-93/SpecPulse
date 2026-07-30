@@ -1,7 +1,8 @@
 import '@testing-library/jest-dom';
 import { cleanup } from '@testing-library/react';
-import { afterEach, vi } from 'vitest';
+import { afterAll, afterEach, beforeAll, vi } from 'vitest';
 import { QueryClient } from '@tanstack/react-query'; // Create a default QueryClient for tests
+import { server } from './mocks/server';
 
 // Create a default QueryClient for tests
 const testQueryClient = new QueryClient({
@@ -9,7 +10,7 @@ const testQueryClient = new QueryClient({
         queries: {
             retry: false,
             logger: {
-                log: console.log,
+                log: () => {},
                 warn: console.warn,
                 error: () => {}, // Silence error logs in tests
             },
@@ -21,6 +22,19 @@ const testQueryClient = new QueryClient({
 afterEach(() => {
     cleanup();
     testQueryClient.clear();
+});
+
+beforeAll(() => {
+    // Prevent real network requests during tests.
+    server.listen({ onUnhandledRequest: 'error' });
+});
+
+afterEach(() => {
+    server.resetHandlers();
+});
+
+afterAll(() => {
+    server.close();
 });
 
 // Mock window.matchMedia

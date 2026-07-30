@@ -213,9 +213,21 @@ make test-frontend
 # With coverage
 make test-coverage
 
-# Interactive UI (frontend)
-make test-ui
+ # Interactive UI (frontend)
+ make test-ui
 ```
+
+### Frontend API Mocking (MSW)
+
+Frontend component tests are isolated from the backend using **Mock Service Worker (MSW)**.
+
+- The Vitest setup file `specpulse-frontend/src/test/setup.ts` starts an MSW server before tests and resets handlers
+  after each test.
+- Default handlers live in `specpulse-frontend/src/test/mocks/handlers.ts`.
+- Any `/api/v1/*` request is intercepted so tests do not attempt real network calls (e.g.
+  `ECONNREFUSED 127.0.0.1:3000`).
+
+To add/override an endpoint for a single test, use `server.use(...)` in that test file.
 
 ## 📊 API Endpoints
 

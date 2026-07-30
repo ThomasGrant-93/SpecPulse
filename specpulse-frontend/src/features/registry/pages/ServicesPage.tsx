@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { pullApi, registryApi } from '@/services/api';
+import { pullApi, registryApi } from '@/features/registry/api';
 import type { CreateServiceRequest, Service } from '@/types';
 import ServiceList from '@/components/ServiceList';
 import ServiceForm from '@/components/ServiceForm';
@@ -20,7 +20,6 @@ export default function ServicesPage() {
     const [showBulkAssign, setShowBulkAssign] = useState(false);
     const queryClient = useQueryClient();
 
-    // Debounce search query to avoid excessive API calls
     const { debouncedValue: debouncedSearchQuery } = useDebounce(searchQuery, { delay: 300 });
 
     const {
@@ -48,7 +47,6 @@ export default function ServicesPage() {
 
     const createMutation = useMutation({
         mutationFn: async (data: CreateServiceRequest) => {
-            // Ensure groupId is explicitly included in the request
             const requestData = {
                 name: data.name,
                 openApiUrl: data.openApiUrl,
@@ -75,7 +73,6 @@ export default function ServicesPage() {
 
     const updateMutation = useMutation({
         mutationFn: async ({ id, data }: { id: number; data: CreateServiceRequest }) => {
-            // Ensure groupId is explicitly included in the request
             const requestData = {
                 name: data.name,
                 openApiUrl: data.openApiUrl,
@@ -160,9 +157,7 @@ export default function ServicesPage() {
             <div className="sm:flex sm:items-center">
                 <div className="sm:flex-auto">
                     <h1 className="text-2xl font-semibold text-gray-900">Services</h1>
-                    <p className="mt-2 text-sm text-gray-700">
-                        Registered services with OpenAPI specifications
-                    </p>
+                    <p className="mt-2 text-sm text-gray-700">Registered services with OpenAPI specifications</p>
                 </div>
                 <div className="mt-4 sm:ml-16 sm:mt-0 sm:flex-none space-x-2">
                     <button
@@ -194,7 +189,6 @@ export default function ServicesPage() {
                 </div>
             </div>
 
-            {/* Search Bar */}
             <div className="mt-6">
                 <SearchWithSuggestions
                     value={searchQuery}
@@ -205,10 +199,8 @@ export default function ServicesPage() {
                 {searchQuery && (
                     <div className="mt-2 flex items-center justify-between">
                         <p className="text-sm text-gray-600">
-                            Showing results for "<span className="font-medium">{searchQuery}</span>"
-                            {services.length === 0 && (
-                                <span className="text-red-600 ml-1">- No matches found</span>
-                            )}
+                            Showing <span className="font-medium">{searchQuery}</span>
+                            {services.length === 0 && <span className="text-red-600 ml-1">- No matches found</span>}
                         </p>
                         <span className="text-sm text-gray-500">
                             {services.length} result{services.length !== 1 ? 's' : ''}
@@ -232,17 +224,13 @@ export default function ServicesPage() {
                     }}
                 />
 
-                {/* Pagination */}
                 {totalItems > 0 && (
                     <div className="mt-6 flex items-center justify-between border-t border-gray-200 pt-4">
                         <div className="flex items-center gap-4">
                             <p className="text-sm text-gray-700">
-                                Showing{' '}
-                                <span className="font-medium">{(page - 1) * pageSize + 1}</span> to{' '}
-                                <span className="font-medium">
-                                    {Math.min(page * pageSize, totalItems)}
-                                </span>{' '}
-                                of <span className="font-medium">{totalItems}</span> results
+                                Showing <span className="font-medium">{(page - 1) * pageSize + 1}</span> to{' '}
+                                <span className="font-medium">{Math.min(page * pageSize, totalItems)}</span> of{' '}
+                                <span className="font-medium">{totalItems}</span> results
                             </p>
                             <select
                                 value={pageSize}

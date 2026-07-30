@@ -1,5 +1,5 @@
 import { act, renderHook } from '@testing-library/react';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useLocalStorage } from './useLocalStorage';
 
 describe('useLocalStorage', () => {
@@ -51,11 +51,13 @@ describe('useLocalStorage', () => {
     });
 
     it('should return default value for invalid JSON in localStorage', () => {
+        const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
         localStorage.setItem('test-key', 'invalid-json');
 
         const { result } = renderHook(() => useLocalStorage('test-key', 'default-value'));
 
         expect(result.current.value).toBe('default-value');
+        expect(warnSpy).not.toHaveBeenCalled();
     });
 
     it('should remove value from localStorage when removeValue is called', () => {

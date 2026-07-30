@@ -54,7 +54,7 @@ public class ApplicationSetting {
     private LocalDateTime updatedAt;
 
     /**
-     * Получить значение как строку
+     * Get the value as a string
      */
     public String getValueAsString() {
         if (value == null) {
@@ -75,7 +75,7 @@ public class ApplicationSetting {
     }
 
     /**
-     * Получить значение как boolean
+     * Get the value as a boolean
      */
     public Boolean getValueAsBoolean() {
         if (value instanceof Boolean) {
@@ -101,7 +101,7 @@ public class ApplicationSetting {
     }
 
     /**
-     * Получить значение как Integer
+     * Get the value as an integer
      */
     public Integer getValueAsInteger() {
         if (value instanceof Integer) {

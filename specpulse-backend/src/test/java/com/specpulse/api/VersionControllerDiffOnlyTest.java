@@ -1,5 +1,6 @@
 package com.specpulse.api;
 
+import com.specpulse.auth.repository.UserRepository;
 import com.specpulse.version.SpecVersionDTO;
 import com.specpulse.version.VersionService;
 import org.junit.jupiter.api.DisplayName;
@@ -7,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -22,6 +24,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(VersionController.class)
 @SuppressWarnings("removal")
+@Import(com.specpulse.config.SecurityConfig.class)
 class VersionControllerDiffOnlyTest {
 
     @Autowired
@@ -29,6 +32,9 @@ class VersionControllerDiffOnlyTest {
 
     @MockBean
     private VersionService versionService;
+
+    @MockBean
+    private UserRepository userRepository;
 
     @Test
     @DisplayName("Should return 400 when diff_only is set but compare_to is missing")
@@ -67,9 +73,9 @@ class VersionControllerDiffOnlyTest {
 
         // When & Then
         mockMvc.perform(get("/api/v1/versions/1")
-                .param("diff_only", "true")
-                .param("compare_to", "2")
-                .accept(MediaType.APPLICATION_JSON))
+                        .param("diff_only", "true")
+                        .param("compare_to", "2")
+                        .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.specContent", equalTo(dto.specContent())));
 

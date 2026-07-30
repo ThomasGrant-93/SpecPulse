@@ -1,6 +1,7 @@
 package com.specpulse.web;
 
 import com.specpulse.api.DiffController;
+import com.specpulse.auth.repository.UserRepository;
 import com.specpulse.config.WebConfig;
 import com.specpulse.diff.DiffService;
 import org.hamcrest.Matchers;
@@ -23,7 +24,7 @@ import java.util.regex.Pattern;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(controllers = {DiffController.class, FrontendSpaController.class})
-@Import(WebConfig.class)
+@Import({com.specpulse.config.SecurityConfig.class, WebConfig.class})
 class StaticAssetsServingTest {
 
     @Autowired
@@ -33,6 +34,10 @@ class StaticAssetsServingTest {
     @MockBean
     @SuppressWarnings("unused")
     private DiffService diffService;
+
+    @MockBean
+    @SuppressWarnings("unused")
+    private UserRepository userRepository;
 
     private static String indexHtmlFromClasspath() throws IOException {
         InputStream is = StaticAssetsServingTest.class.getClassLoader()

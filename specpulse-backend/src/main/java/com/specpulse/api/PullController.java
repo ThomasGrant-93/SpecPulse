@@ -3,10 +3,11 @@ package com.specpulse.api;
 import com.specpulse.scheduler.PullAllResult;
 import com.specpulse.scheduler.PullResult;
 import com.specpulse.scheduler.SpecPullScheduler;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
  * REST controller for manual pull operations.
@@ -17,28 +18,8 @@ public class PullController {
 
     private final SpecPullScheduler pullScheduler;
 
-    // If configured (non-empty), requires Authorization: Bearer <token> for pull operations.
-    private final String authToken;
-
-    public PullController(
-            SpecPullScheduler pullScheduler,
-            @Value("${specpulse.auth.token:}") String authToken
-    ) {
+    public PullController(SpecPullScheduler pullScheduler) {
         this.pullScheduler = pullScheduler;
-        this.authToken = authToken;
-    }
-
-    private boolean isPullAuthorized(String authorization) {
-        if (authToken == null || authToken.isBlank()) {
-            return true; // Backward-compatible default.
-        }
-
-        if (authorization == null || !authorization.startsWith("Bearer ")) {
-            return false;
-        }
-
-        String token = authorization.substring("Bearer ".length()).trim();
-        return authToken.equals(token);
     }
 
     /**
@@ -46,13 +27,8 @@ public class PullController {
      */
     @PostMapping("/service/{serviceId}")
     public ResponseEntity<PullResult> pullService(
-            @PathVariable Long serviceId,
-            @RequestHeader(name = "Authorization", required = false) String authorization
+            @PathVariable Long serviceId
     ) {
-        if (!isPullAuthorized(authorization)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
         PullResult result = pullScheduler.pullServiceById(serviceId);
         return ResponseEntity.ok(result);
     }
@@ -61,13 +37,7 @@ public class PullController {
      * Manually trigger pull for all enabled services.
      */
     @PostMapping("/all")
-    public ResponseEntity<PullAllResult> pullAll(
-            @RequestHeader(name = "Authorization", required = false) String authorization
-    ) {
-        if (!isPullAuthorized(authorization)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
+    public ResponseEntity<PullAllResult> pullAll() {
         PullAllResult result = pullScheduler.pullAllEnabledServicesManual();
         return ResponseEntity.ok(result);
     }

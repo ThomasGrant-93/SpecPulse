@@ -22,7 +22,7 @@ public class ApplicationSettingService {
     private final ObjectMapper objectMapper;
 
     /**
-     * Получить все настройки сгруппированные по категориям
+     * Get all settings grouped by categories
      */
     public List<ApplicationSettingDTO.SettingsCategory> getAllSettingsGrouped() {
         List<ApplicationSetting> allSettings = settingRepository.findAllByOrderByCategoryAscKeyAsc();
@@ -30,7 +30,7 @@ public class ApplicationSettingService {
     }
 
     /**
-     * Получить настройки категории
+     * Get category settings
      */
     public ApplicationSettingDTO.SettingsCategory getCategorySettings(String category) {
         List<ApplicationSetting> settings = settingRepository.findByCategoryOrderByKeyAsc(category);
@@ -51,7 +51,7 @@ public class ApplicationSettingService {
     }
 
     /**
-     * Получить публичные настройки (для frontend без аутентификации)
+     * Get public settings (for a frontend without authentication)
      */
     public List<ApplicationSettingDTO.SettingsCategory> getPublicSettingsGrouped() {
         List<ApplicationSetting> allSettings = settingRepository.findAllByOrderByCategoryAscKeyAsc();
@@ -63,7 +63,7 @@ public class ApplicationSettingService {
     }
 
     /**
-     * Получить конкретную настройку
+     * Get a specific setting
      */
     public ApplicationSettingDTO getSetting(String category, String key) {
         ApplicationSetting setting = settingRepository.findByCategoryAndKey(category, key)
@@ -73,7 +73,7 @@ public class ApplicationSettingService {
     }
 
     /**
-     * Обновить настройку
+     * Update a setting
      */
     @Transactional
     public ApplicationSettingDTO updateSetting(String category, String key, Object value) {
@@ -98,7 +98,7 @@ public class ApplicationSettingService {
     }
 
     /**
-     * Массовое обновление настроек
+     * Bulk update settings
      */
     @Transactional
     public List<ApplicationSettingDTO> updateSettings(List<SettingUpdateCommand> updates) {
@@ -132,7 +132,7 @@ public class ApplicationSettingService {
     }
 
     /**
-     * Получить значение настройки (удобный метод)
+     * Get a setting value (convenience method)
      */
     public <T> T getSettingValue(String category, String key, Class<T> type) {
         ApplicationSetting setting = settingRepository.findByCategoryAndKey(category, key)

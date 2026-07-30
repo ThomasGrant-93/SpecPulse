@@ -2,8 +2,8 @@ package com.specpulse.version;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.specpulse.registry.ServiceEntity;
 import com.specpulse.parser.OpenApiParser;
+import com.specpulse.registry.ServiceEntity;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;

@@ -144,3 +144,60 @@ export interface PullResult {
     versionHash?: string;
     error?: string;
 }
+
+export interface LoginRequest {
+    username: string;
+    password: string;
+}
+
+export interface LoginResponse {
+    accessToken: string;
+    refreshToken: string;
+}
+
+export interface RefreshRequest {
+    refreshToken: string;
+}
+
+export interface RefreshResponse {
+    accessToken: string;
+    refreshToken: string;
+}
+
+export interface MeResponse {
+    userId: number;
+    username: string;
+    email: string;
+    enabled: boolean;
+    roles: string[];
+    permissions: string[];
+    attributes: Record<string, unknown>;
+}
+
+export interface AdminUser {
+    id: number;
+    username: string;
+    email: string;
+    enabled: boolean;
+    roles: string[];
+}
+
+export interface AdminRole {
+    id: number;
+    name: string;
+    enabled: boolean;
+}
+
+export interface CreateAdminUserRequest {
+    username: string;
+    email: string;
+    password: string;
+    enabled: boolean;
+    roleNames: string[];
+}
+
+export interface UpdateAdminUserRequest {
+    email: string;
+    enabled: boolean;
+    roleNames: string[];
+}

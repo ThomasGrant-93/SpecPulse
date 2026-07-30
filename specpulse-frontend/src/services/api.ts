@@ -1,9 +1,15 @@
 import axios, { type AxiosError } from 'axios';
+import { authService } from '@/features/auth/authApi';
+import { clearTokens, getAccessToken, getRefreshToken, setTokens } from '@/features/auth/tokenStore';
+import { isTestEnvironment } from '@/utils/testEnv';
 import type {
     ApplicationSetting,
     AuditLog,
+    AdminRole,
+    AdminUser,
     CreateGroupRequest,
     CreateServiceRequest,
+    CreateAdminUserRequest,
     PullResult,
     Service,
     ServiceGroup,
@@ -11,13 +17,16 @@ import type {
     SettingValue,
     SpecDiff,
     SpecVersion,
+    UpdateAdminUserRequest,
     UpdateGroupRequest,
     UpdateServiceRequest,
 } from '@/types';
 
 const API_BASE = '/api/v1';
 
-const api = axios.create({
+const isTestEnv = isTestEnvironment();
+
+export const api = axios.create({
     baseURL: API_BASE,
     headers: {
         'Content-Type': 'application/json',
@@ -27,7 +36,20 @@ const api = axios.create({
 // Request interceptor - logging in development
 api.interceptors.request.use(
     (config) => {
-        if (import.meta.env.DEV) {
+        // Attach access token for backend JWT auth (don't override explicit Authorization).
+        const access = getAccessToken();
+        const currentHeaders = config.headers ?? {};
+        const hasAuthHeader =
+            typeof (currentHeaders as any).Authorization === 'string' ||
+            typeof (currentHeaders as any).authorization === 'string';
+        if (access && !hasAuthHeader) {
+            config.headers = {
+                ...(currentHeaders as any),
+                Authorization: `Bearer ${access}`,
+            } as any;
+        }
+
+        if (import.meta.env.DEV && !isTestEnv) {
             console.warn('[API Request]', config.method?.toUpperCase(), config.url, {
                 params: config.params,
                 data: config.data,
@@ -36,18 +58,22 @@ api.interceptors.request.use(
         return config;
     },
     (error) => {
-        if (import.meta.env.DEV) {
+        if (import.meta.env.DEV && !isTestEnv) {
             console.error('[API Request Error]', error.message);
         }
         return Promise.reject(error);
     }
 );
 
-// Response interceptor - error handling
+let refreshInFlight: Promise<string> | null = null;
+
+type RetryAxiosRequestConfig = Parameters<typeof api.request>[0] & { __authRetry?: boolean };
+
+// Response interceptor - error handling + refresh on 401
 api.interceptors.response.use(
     (response) => response,
     (error: AxiosError) => {
-        if (import.meta.env.DEV) {
+        if (import.meta.env.DEV && !isTestEnv) {
             console.error('[API Response Error]', {
                 status: error.response?.status,
                 statusText: error.response?.statusText,
@@ -56,21 +82,55 @@ api.interceptors.response.use(
             });
         }
 
-        // Handle 401 Unauthorized - could redirect to login in future
         if (error.response?.status === 401) {
-            console.warn('[API] Unauthorized access - user should be redirected to login');
-            // TODO: Implement auth flow
-            // window.location.href = '/login';
+            const config = error.config as RetryAxiosRequestConfig;
+            const url = config.url ?? '';
+            const isAuthCall = url.includes('/auth/login') || url.includes('/auth/refresh') || url.endsWith('/auth/me');
+            if (isAuthCall || config.__authRetry) {
+                clearTokens();
+                window.dispatchEvent(new Event('specpulse:auth:logout'));
+                return Promise.reject(error);
+            }
+
+            const refresh = getRefreshToken();
+            if (!refresh) {
+                clearTokens();
+                window.dispatchEvent(new Event('specpulse:auth:logout'));
+                return Promise.reject(error);
+            }
+
+            config.__authRetry = true;
+
+            if (!refreshInFlight) {
+                refreshInFlight = authService
+                    .refresh({ refreshToken: refresh })
+                    .then((res) => {
+                        setTokens({ accessToken: res.data.accessToken, refreshToken: res.data.refreshToken });
+                        return res.data.accessToken;
+                    })
+                    .finally(() => {
+                        refreshInFlight = null;
+                    });
+            }
+
+            return refreshInFlight.then((newAccess) => {
+                const currentHeaders = config.headers ?? {};
+                config.headers = {
+                    ...(currentHeaders as any),
+                    Authorization: `Bearer ${newAccess}`,
+                } as any;
+                return api.request(config);
+            });
         }
 
         // Handle 403 Forbidden
         if (error.response?.status === 403) {
-            console.warn('[API] Forbidden access');
+            if (!isTestEnv) console.warn('[API] Forbidden access');
         }
 
         // Handle 500 Internal Server Error
         if (error.response?.status === 500) {
-            console.error('[API] Internal server error');
+            if (!isTestEnv) console.error('[API] Internal server error');
         }
 
         return Promise.reject(error);
@@ -152,6 +212,20 @@ export const settingsApi = {
     updateBulk: (updates: Record<string, SettingValue>) =>
         api.patch<ApplicationSetting[]>('/settings', updates),
     getCategories: () => api.get<string[]>('/settings/categories'),
+};
+
+// Admin API (user/role management)
+export const adminUsersApi = {
+    list: () => api.get<AdminUser[]>('/admin/users'),
+    getById: (id: number) => api.get<AdminUser>(`/admin/users/${id}`),
+    create: (data: CreateAdminUserRequest) => api.post<AdminUser>('/admin/users', data),
+    update: (id: number, data: UpdateAdminUserRequest) =>
+        api.put<AdminUser>(`/admin/users/${id}`, data),
+    delete: (id: number) => api.delete(`/admin/users/${id}`),
+};
+
+export const adminRolesApi = {
+    listEnabled: () => api.get<AdminRole[]>('/admin/roles'),
 };
 
 export default api;

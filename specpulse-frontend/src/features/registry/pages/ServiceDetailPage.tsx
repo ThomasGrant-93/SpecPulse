@@ -1,6 +1,6 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { pullApi, registryApi, versionsApi } from '@/services/api';
+import { pullApi, registryApi, versionsApi } from '@/features/registry/api';
 import VersionList from '@/components/VersionList';
 import type { SpecDiff } from '@/types';
 
@@ -17,7 +17,6 @@ export default function ServiceDetailPage() {
         },
         enabled: !isNaN(serviceId),
         retry: (failureCount, err: unknown) => {
-            // Don't retry on 404 errors
             const axiosError = err as { response?: { status?: number } };
             return axiosError.response?.status !== 404 && failureCount < 3;
         },
@@ -35,9 +34,7 @@ export default function ServiceDetailPage() {
     const { data: diffs = [] } = useQuery({
         queryKey: ['diffs', serviceId],
         queryFn: async () => {
-            const response = await fetch(`/api/v1/diffs/service/${serviceId}`).then((r) =>
-                r.json()
-            );
+            const response = await fetch(`/api/v1/diffs/service/${serviceId}`).then((r) => r.json());
             return response as SpecDiff[];
         },
         enabled: !isNaN(serviceId),
@@ -54,7 +51,6 @@ export default function ServiceDetailPage() {
 
     const breakingChangesCount = diffs.filter((d) => d.hasBreakingChanges).length;
 
-    // Handle 404 and other errors
     if (error) {
         const isNotFound = (error as { response?: { status?: number } })?.response?.status === 404;
         return (
@@ -100,9 +96,7 @@ export default function ServiceDetailPage() {
                 <div className="flex items-center justify-between">
                     <div>
                         <h1 className="text-2xl font-semibold text-gray-900">{service.name}</h1>
-                        <p className="mt-2 text-sm text-gray-600">
-                            {service.description || 'No description'}
-                        </p>
+                        <p className="mt-2 text-sm text-gray-600">{service.description || 'No description'}</p>
                     </div>
                     <div className="flex gap-2">
                         <button
@@ -149,12 +143,8 @@ export default function ServiceDetailPage() {
 
             <div>
                 <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-semibold text-gray-900">
-                        Versions ({versions.length})
-                    </h2>
-                    <p className="text-sm text-gray-500">
-                        Click "View Spec" to view a specific version
-                    </p>
+                    <h2 className="text-lg font-semibold text-gray-900">Versions ({versions.length})</h2>
+                    <p className="text-sm text-gray-500">Click "View Spec" to view a specific version</p>
                 </div>
                 <VersionList versions={versions} serviceId={serviceId} />
             </div>
