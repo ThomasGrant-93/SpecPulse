@@ -6,9 +6,13 @@ import ServiceForm from './ServiceForm';
 import type { Service } from '@/types';
 import { testQueryClient } from '@/test/setup'; // Mock fetch globally
 
-// Mock fetch globally
-const mockFetch = vi.fn();
-global.fetch = mockFetch;
+import { server } from '@/test/mocks/server';
+import {
+    mockValidationHandler,
+    mockValidationHandlerDelayed,
+    mockValidationNetworkError,
+    mockValidationNonJsonResponse,
+} from '@/test/mocks/handlers';
 
 describe('ServiceForm', () => {
     beforeEach(() => {
@@ -84,17 +88,7 @@ describe('ServiceForm', () => {
         });
 
         it('should validate OpenAPI spec before submit for new service', async () => {
-            // Mock successful validation - called twice (once for validate button, once for submit)
-            mockFetch
-                .mockResolvedValueOnce({
-                    ok: true,
-                    json: async () => ({ valid: true, errors: [] }),
-                })
-                .mockResolvedValueOnce({
-                    ok: true,
-                    json: async () => ({ valid: true, errors: [] }),
-                });
-
+            // Default MSW handler returns { valid: true, errors: [] }.
             renderServiceForm();
 
             const user = userEvent.setup();
@@ -128,13 +122,12 @@ describe('ServiceForm', () => {
         });
 
         it('should show validation errors from API', async () => {
-            mockFetch.mockResolvedValueOnce({
-                ok: true,
-                json: async () => ({
+            server.use(
+                mockValidationHandler({
                     valid: false,
                     errors: ['Invalid OpenAPI format', 'Missing required field'],
-                }),
-            });
+                })
+            );
 
             renderServiceForm();
 
@@ -253,12 +246,6 @@ describe('ServiceForm', () => {
         });
 
         it('should call onSubmit with form data', async () => {
-            // Mock validation called on submit
-            mockFetch.mockResolvedValueOnce({
-                ok: true,
-                json: async () => ({ valid: true, errors: [] }),
-            });
-
             renderServiceForm();
 
             const user = userEvent.setup();
@@ -285,19 +272,7 @@ describe('ServiceForm', () => {
 
         it('should disable buttons during validation', async () => {
             // Mock a slow validation
-            mockFetch.mockImplementationOnce(
-                () =>
-                    new Promise((resolve) =>
-                        setTimeout(
-                            () =>
-                                resolve({
-                                    ok: true,
-                                    json: async () => ({ valid: true, errors: [] }),
-                                }),
-                            100
-                        )
-                    )
-            );
+            server.use(mockValidationHandlerDelayed({ valid: true, errors: [] }, 100));
 
             renderServiceForm();
 
@@ -333,10 +308,7 @@ describe('ServiceForm', () => {
         });
 
         it('should show validation errors in alert region', async () => {
-            mockFetch.mockResolvedValueOnce({
-                ok: true,
-                json: async () => ({ valid: false, errors: ['Error 1'] }),
-            });
+            server.use(mockValidationHandler({ valid: false, errors: ['Error 1'] }));
 
             renderServiceForm();
 
@@ -353,10 +325,7 @@ describe('ServiceForm', () => {
         });
 
         it('should show success message with proper styling', async () => {
-            mockFetch.mockResolvedValueOnce({
-                ok: true,
-                json: async () => ({ valid: true, errors: [] }),
-            });
+            server.use(mockValidationHandler({ valid: true, errors: [] }));
 
             renderServiceForm();
 
@@ -375,7 +344,7 @@ describe('ServiceForm', () => {
 
     describe('Error handling', () => {
         it('should handle fetch errors gracefully', async () => {
-            mockFetch.mockRejectedValueOnce(new Error('Network error'));
+            server.use(mockValidationNetworkError());
 
             renderServiceForm();
 
@@ -392,10 +361,7 @@ describe('ServiceForm', () => {
         });
 
         it('should handle non-JSON responses', async () => {
-            mockFetch.mockResolvedValueOnce({
-                ok: false,
-                text: async () => 'Internal Server Error',
-            });
+            server.use(mockValidationNonJsonResponse());
 
             renderServiceForm();
 

@@ -1,5 +1,9 @@
 import { useCallback, useState } from 'react';
 
+import { isTestEnvironment } from '@/utils/testEnv';
+
+const isTestEnv = isTestEnvironment();
+
 interface UseLocalStorageOptions<T> {
     serializer?: (value: T) => string;
     deserializer?: (value: string) => T;
@@ -26,7 +30,9 @@ export function useLocalStorage<T>(
             }
             return initialValue;
         } catch (error) {
-            console.warn(`Error reading localStorage key "${key}":`, error);
+            if (!isTestEnv) {
+                console.warn(`Error reading localStorage key "${key}":`, error);
+            }
             return initialValue;
         }
     });
@@ -37,7 +43,9 @@ export function useLocalStorage<T>(
                 setStoredValue(value);
                 window.localStorage.setItem(key, serializer(value));
             } catch (error) {
-                console.warn(`Error setting localStorage key "${key}":`, error);
+                if (!isTestEnv) {
+                    console.warn(`Error setting localStorage key "${key}":`, error);
+                }
             }
         },
         [key, serializer]
@@ -48,7 +56,9 @@ export function useLocalStorage<T>(
             setStoredValue(null);
             window.localStorage.removeItem(key);
         } catch (error) {
-            console.warn(`Error removing localStorage key "${key}":`, error);
+            if (!isTestEnv) {
+                console.warn(`Error removing localStorage key "${key}":`, error);
+            }
         }
     }, [key]);
 

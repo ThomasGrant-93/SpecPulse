@@ -4,7 +4,9 @@
  * Error logs are always shown for debugging production issues
  */
 
-const isDev = import.meta.env.DEV;
+import { isTestEnvironment } from './testEnv';
+
+const isDev = import.meta.env.DEV && !isTestEnvironment();
 
 export const logger = {
     /**
