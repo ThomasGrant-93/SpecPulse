@@ -14,7 +14,7 @@ export const logger = {
      */
     debug: (message: string, ...args: unknown[]): void => {
         if (isDev) {
-            console.debug(`[SpecPulse DEBUG] ${message}`, ...args);
+            console.warn(`[SpecPulse DEBUG] ${message}`, ...args);
         }
     },
 
@@ -39,7 +39,7 @@ export const logger = {
      */
     info: (message: string, ...args: unknown[]): void => {
         if (isDev) {
-            console.info(`[SpecPulse INFO] ${message}`, ...args);
+            console.warn(`[SpecPulse INFO] ${message}`, ...args);
         }
     },
 };

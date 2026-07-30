@@ -10,7 +10,7 @@ const testQueryClient = new QueryClient({
         queries: {
             retry: false,
             logger: {
-                log: console.log,
+                log: () => {},
                 warn: console.warn,
                 error: () => {}, // Silence error logs in tests
             },
