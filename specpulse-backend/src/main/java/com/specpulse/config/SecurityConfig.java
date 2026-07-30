@@ -18,6 +18,8 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import com.specpulse.auth.security.RbacPermissions;
+
 @Configuration
 @EnableMethodSecurity(prePostEnabled = true)
 @EnableConfigurationProperties(JwtProperties.class)
@@ -83,6 +85,8 @@ public class SecurityConfig {
                                 "/manifest.json"
                         ).permitAll()
                         .requestMatchers("/actuator/health", "/actuator/info").permitAll()
+                        // Admin-only endpoints
+                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                         // RBAC-protected mutations
                         .requestMatchers(HttpMethod.POST, "/api/v1/registry/validate").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/v1/registry").hasRole("ADMIN")
@@ -103,7 +107,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/v1/settings/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/api/v1/settings/**").hasRole("ADMIN")
 
-                        .requestMatchers(HttpMethod.POST, "/api/v1/tests/proxy").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/tests/proxy").hasAuthority(RbacPermissions.API_TEST_EXECUTE_AUTHORITY)
 
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         // Other endpoints remain public (read-only endpoints)

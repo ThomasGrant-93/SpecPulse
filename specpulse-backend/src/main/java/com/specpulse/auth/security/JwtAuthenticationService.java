@@ -1,10 +1,14 @@
 package com.specpulse.auth.security;
 
 import com.specpulse.auth.entity.RoleEntity;
+import com.specpulse.auth.entity.PermissionEntity;
 import com.specpulse.auth.entity.UserEntity;
 import com.specpulse.auth.repository.UserRepository;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import java.util.Optional;
 
@@ -27,19 +31,29 @@ public class JwtAuthenticationService {
     public Optional<JwtPrincipal> authenticateAccessToken(String token) {
         return jwtService.parseAccessToken(token)
                 .flatMap(principal -> userRepository.findByIdAndDeletedAtIsNull(principal.getUserId())
-                        .filter(UserEntity::isEnabled)
+                        .filter(user -> user.isEnabled())
                         .map(user -> buildPrincipal(user, principal)));
     }
 
     private JwtPrincipal buildPrincipal(UserEntity user, JwtPrincipal tokenPrincipal) {
-        var enabledRoles = user.getRoles().stream()
+        List<RoleEntity> enabledRoles = user.getRoles().stream()
                 .filter(r -> r.getDeletedAt() == null && r.isEnabled())
-                .map(RoleEntity::getName)
                 .toList();
 
-        var authorities = enabledRoles.stream()
-                .map(r -> new SimpleGrantedAuthority("ROLE_" + r))
-                .toList();
+        List<SimpleGrantedAuthority> authorities = new ArrayList<>();
+        List<String> roleNames = new ArrayList<>();
+
+        for (RoleEntity role : enabledRoles) {
+            String roleName = role.getName();
+            roleNames.add(roleName);
+            authorities.add(new SimpleGrantedAuthority("ROLE_" + roleName));
+
+            for (PermissionEntity perm : role.getPermissions()) {
+                if (perm.getDeletedAt() == null && perm.isEnabled()) {
+                    authorities.add(new SimpleGrantedAuthority(RbacPermissions.authorityFor(perm.getName())));
+                }
+            }
+        }
 
         return new JwtPrincipal(
                 user.getId(),
@@ -47,7 +61,7 @@ public class JwtAuthenticationService {
                 user.getEmail(),
                 user.isEnabled(),
                 authorities,
-                enabledRoles,
+                roleNames,
                 tokenPrincipal.getAttributes()
         );
     }

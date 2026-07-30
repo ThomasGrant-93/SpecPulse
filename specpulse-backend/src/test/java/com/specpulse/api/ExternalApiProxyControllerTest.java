@@ -40,6 +40,14 @@ class ExternalApiProxyControllerTest {
         JwtTestUtil.stubEnabledAdmin(userRepository, userId);
     }
 
+    private void stubUserAndGetAuth(long userId) {
+        JwtTestUtil.stubEnabledUser(userRepository, userId);
+    }
+
+    private void stubViewerAndGetAuth(long userId) {
+        JwtTestUtil.stubEnabledViewer(userRepository, userId);
+    }
+
     @Test
     @DisplayName("Should return 502 when proxyService reports status=0")
     void shouldReturn502OnProxyFailure() throws Exception {
@@ -125,5 +133,42 @@ class ExternalApiProxyControllerTest {
                         .content(requestJson))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(200));
+    }
+
+    @Test
+    @DisplayName("Should return 200 for USER role when permissions allow execution")
+    void shouldAllowProxyForUserRole() throws Exception {
+        long userId = 2L;
+        stubUserAndGetAuth(userId);
+        String token = JwtTestUtil.userAccessToken(jwtService, userId);
+
+        given(proxyService.proxy(any())).willReturn(
+                new ExternalApiProxyResponse(200, "OK", java.util.Map.of(), null, null)
+        );
+
+        String requestJson = "{\"url\":\"https://example.com\",\"method\":\"GET\",\"headers\":{},\"body\":null}";
+
+        mockMvc.perform(post("/api/v1/tests/proxy")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestJson))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(200));
+    }
+
+    @Test
+    @DisplayName("Should return 403 for VIEWER role when execution permissions are missing")
+    void shouldReturn403ForViewerRole() throws Exception {
+        long userId = 3L;
+        stubViewerAndGetAuth(userId);
+        String token = JwtTestUtil.viewerAccessToken(jwtService, userId);
+
+        String requestJson = "{\"url\":\"https://example.com\",\"method\":\"GET\",\"headers\":{},\"body\":null}";
+
+        mockMvc.perform(post("/api/v1/tests/proxy")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestJson))
+                .andExpect(status().isForbidden());
     }
 }

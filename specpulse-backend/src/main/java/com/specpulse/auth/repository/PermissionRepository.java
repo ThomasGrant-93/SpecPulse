@@ -8,4 +8,6 @@ import java.util.Optional;
 public interface PermissionRepository extends JpaRepository<PermissionEntity, Long> {
 
     Optional<PermissionEntity> findByNameAndEnabledTrueAndDeletedAtIsNull(String name);
+
+    Optional<PermissionEntity> findByNameAndDeletedAtIsNull(String name);
 }
