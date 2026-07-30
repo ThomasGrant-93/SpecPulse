@@ -4,9 +4,13 @@ import { registryApi, versionsApi } from '@/features/spec/api';
 import ApiSpecViewer from '@/components/ApiSpecViewer';
 import type { AnySpec, AuthCredentialsMap } from '@/types/openapi';
 import { Modal } from '@/components/Modal';
+import { GlobalHeadersModal } from '@/components/GlobalHeadersModal';
+import { HeadersProvider } from '@/features/spec/HeadersProvider';
+import { useAuth } from '@/features/auth/useAuth';
 import { useEffect, useMemo, useState } from 'react';
 
 export default function SpecDetailPage() {
+    const { user } = useAuth();
     const { id } = useParams<{ id: string }>();
     const [searchParams] = useSearchParams();
     const serviceId = Number(id);
@@ -17,6 +21,7 @@ export default function SpecDetailPage() {
 
     const AUTH_STORAGE_KEY = 'specpulse_auth_credentials';
     const [isAuthorizeOpen, setIsAuthorizeOpen] = useState(false);
+    const [isGlobalHeadersOpen, setIsGlobalHeadersOpen] = useState(false);
     const [authCredentials, setAuthCredentials] = useState<AuthCredentialsMap>(() => {
         try {
             const raw = sessionStorage.getItem(AUTH_STORAGE_KEY);
@@ -162,7 +167,8 @@ export default function SpecDetailPage() {
     }
 
     return (
-        <div>
+        <HeadersProvider>
+            <div>
             {/* Header */}
             <div className="mb-6">
                 <div className="flex items-center justify-between">
@@ -182,6 +188,12 @@ export default function SpecDetailPage() {
                             className="text-sm text-gray-600 hover:text-gray-900 underline"
                         >
                             Authorize
+                        </button>
+                        <button
+                            onClick={() => setIsGlobalHeadersOpen(true)}
+                            className="text-sm text-gray-600 hover:text-gray-900 underline"
+                        >
+                            Headers
                         </button>
                         <a
                             href={service.openApiUrl}
@@ -283,7 +295,16 @@ export default function SpecDetailPage() {
                 <div className="text-center py-12">Loading specification...</div>
             ) : spec ? (
                 <>
-                    <ApiSpecViewer spec={spec} baseUrl={baseUrl} authCredentials={authCredentials} />
+                    <ApiSpecViewer
+                    spec={spec}
+                    baseUrl={baseUrl}
+                    authCredentials={authCredentials}
+                        canExecuteApiTests={Boolean(
+                            user?.permissions?.includes('PERM_API_TEST_EXECUTE') ||
+                                user?.roles?.includes('USER') ||
+                                user?.roles?.includes('ADMIN')
+                        )}
+                    />
 
                     <Modal isOpen={isAuthorizeOpen} onClose={() => setIsAuthorizeOpen(false)} title="Authorize" size="lg">
                         <div className="space-y-4">
@@ -342,7 +363,7 @@ export default function SpecDetailPage() {
                                                                 API key ({String((schemeDef as any).in)}:{' '}{(schemeDef as any).name})
                                                             </div>
                                                             <input
-                                                                type="text"
+                                                                type="password"
                                                                 value={cred.value || ''}
                                                                 onChange={(e) =>
                                                                     setCredPatch({
@@ -419,7 +440,7 @@ export default function SpecDetailPage() {
                                                                 {(schemeDef as any).scheme || 'http'} token
                                                             </div>
                                                             <input
-                                                                type="text"
+                                                                type="password"
                                                                 value={cred.token || ''}
                                                                 onChange={(e) => setCredPatch({ token: e.target.value })}
                                                                 className="w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
@@ -432,7 +453,7 @@ export default function SpecDetailPage() {
                                                         <div>
                                                             <div className="text-xs font-medium text-gray-700 mb-1">Access token</div>
                                                             <input
-                                                                type="text"
+                                                                type="password"
                                                                 value={cred.token || ''}
                                                                 onChange={(e) => setCredPatch({ token: e.target.value })}
                                                                 className="w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
@@ -452,7 +473,7 @@ export default function SpecDetailPage() {
                                                         <div>
                                                             <div className="text-xs font-medium text-gray-700 mb-1">Token</div>
                                                             <input
-                                                                type="text"
+                                                                type="password"
                                                                 value={cred.token || ''}
                                                                 onChange={(e) => setCredPatch({ token: e.target.value })}
                                                                 className="w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
@@ -491,6 +512,9 @@ export default function SpecDetailPage() {
                     <p className="text-yellow-800">Unable to parse OpenAPI specification. The content may not be valid JSON.</p>
                 </div>
             )}
-        </div>
+            </div>
+
+            <GlobalHeadersModal isOpen={isGlobalHeadersOpen} onClose={() => setIsGlobalHeadersOpen(false)} />
+        </HeadersProvider>
     );
 }

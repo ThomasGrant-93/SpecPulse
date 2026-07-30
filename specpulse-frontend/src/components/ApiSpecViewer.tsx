@@ -14,6 +14,7 @@ interface ApiSpecViewerProps {
     spec: AnySpec;
     baseUrl: string;
     authCredentials: AuthCredentialsMap;
+    canExecuteApiTests: boolean;
 }
 
 const methodColors: Record<HttpMethod, string> = {
@@ -27,7 +28,7 @@ const methodColors: Record<HttpMethod, string> = {
     trace: 'bg-gray-100 text-gray-800 border-gray-300',
 };
 
-export default function ApiSpecViewer({ spec, baseUrl, authCredentials }: ApiSpecViewerProps) {
+export default function ApiSpecViewer({ spec, baseUrl, authCredentials, canExecuteApiTests }: ApiSpecViewerProps) {
     const [expandedEndpoints, setExpandedEndpoints] = useState<Set<string>>(new Set());
     const [selectedTag, setSelectedTag] = useState<string | null>(null);
 
@@ -108,6 +109,65 @@ export default function ApiSpecViewer({ spec, baseUrl, authCredentials }: ApiSpe
 
     // Group endpoints by tags
     const groupedEndpoints = useMemo(() => {
+        const unescapeJsonPointerToken = (token: string) => token.replace(/~1/g, '/').replace(/~0/g, '~');
+
+        const resolveJsonPointer = (pointer: string): any | undefined => {
+            if (typeof pointer !== 'string' || !pointer.startsWith('#/')) return undefined;
+            const parts = pointer.slice(2).split('/').map(unescapeJsonPointerToken);
+            let current: any = spec;
+            for (const part of parts) {
+                if (!current || typeof current !== 'object' || !(part in current)) return undefined;
+                current = current[part];
+            }
+            return current;
+        };
+
+        const refResolutionCache = new Map<string, any>();
+        const refsInProgress = new Set<string>();
+        const maxResolveDepth = 10;
+
+        const resolveNodeRefs = (node: any, depth: number): any => {
+            if (depth > maxResolveDepth) return node;
+            if (Array.isArray(node)) {
+                return node.map((item) => resolveNodeRefs(item, depth + 1));
+            }
+
+            if (!node || typeof node !== 'object') return node;
+
+            const ref = node.$ref;
+            if (typeof ref === 'string') {
+                if (refsInProgress.has(ref)) return node;
+                if (refResolutionCache.has(ref)) return refResolutionCache.get(ref);
+
+                refsInProgress.add(ref);
+                const target = resolveJsonPointer(ref);
+                const resolvedTarget = target !== undefined ? resolveNodeRefs(target, depth + 1) : node;
+
+                // Merge sibling keys next to "$ref" (OpenAPI spec allows overriding).
+                if (target !== undefined && resolvedTarget && typeof resolvedTarget === 'object') {
+                    const { $ref: _ignored, ...siblings } = node;
+                    const resolvedSiblings: Record<string, any> = {};
+                    for (const [k, v] of Object.entries(siblings)) {
+                        resolvedSiblings[k] = resolveNodeRefs(v, depth + 1);
+                    }
+                    const merged = { ...resolvedTarget, ...resolvedSiblings };
+                    refResolutionCache.set(ref, merged);
+                    refsInProgress.delete(ref);
+                    return merged;
+                }
+
+                refResolutionCache.set(ref, resolvedTarget);
+                refsInProgress.delete(ref);
+                return resolvedTarget;
+            }
+
+            const out: Record<string, any> = {};
+            for (const [k, v] of Object.entries(node)) {
+                out[k] = resolveNodeRefs(v, depth + 1);
+            }
+            return out;
+        };
+
         const groups: Map<string, ApiTagGroup> = new Map();
         const untagged: ApiEndpoint[] = [];
 
@@ -147,6 +207,11 @@ export default function ApiSpecViewer({ spec, baseUrl, authCredentials }: ApiSpe
                           };
 
                     if (!endpoint) return;
+
+                    // Dereference request body schemas so UI shows concrete fields instead of raw "$ref".
+                    if (endpoint.requestBody) {
+                        endpoint.requestBody = resolveNodeRefs(endpoint.requestBody, 0) as RequestBodyObject;
+                    }
 
                     const tags = endpoint.tags;
                     if (tags && tags.length > 0) {
@@ -311,6 +376,7 @@ export default function ApiSpecViewer({ spec, baseUrl, authCredentials }: ApiSpe
                                                     baseUrl={baseUrl}
                                                     spec={spec}
                                                     authCredentials={authCredentials}
+                                                    canExecute={canExecuteApiTests}
                                                 />
 
                                                 {/* Summary & Description */}
