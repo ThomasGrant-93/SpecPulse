@@ -222,13 +222,12 @@ export default function UsersPage() {
                                             >
                                                 Edit
                                             </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    // eslint-disable-next-line no-alert
-                                                    if (
-                                                        confirm(`Delete user '${user.username}'?`)
-                                                    ) {
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        if (
+                                                            confirm(`Delete user '${user.username}'?`)
+                                                        ) {
                                                         deleteMutation.mutate(user.id);
                                                     }
                                                 }}

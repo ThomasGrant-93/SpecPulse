@@ -19,7 +19,6 @@ interface ApiEndpointTesterProps {
 }
 
 function base64Utf8(input: string): string {
-    // eslint-disable-next-line no-restricted-globals
     return btoa(unescape(encodeURIComponent(input)));
 }
 
