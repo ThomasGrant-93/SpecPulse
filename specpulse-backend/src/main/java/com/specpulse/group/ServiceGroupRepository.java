@@ -13,38 +13,38 @@ import java.util.Optional;
 public interface ServiceGroupRepository extends JpaRepository<ServiceGroup, Long> {
 
     /**
-     * Найти все корневые группы (без родителя)
+     * Find all root groups (without a parent)
      */
     List<ServiceGroup> findByParentGroupIsNullOrderBySortOrderAsc();
 
     /**
-     * Найти все группы с указанным родителем
+     * Find all groups with the specified parent
      */
     List<ServiceGroup> findByParentGroupIdOrderBySortOrderAsc(Long parentGroupId);
 
     /**
-     * Найти группу по имени и родителю
+     * Find a group by name and parent
      */
     Optional<ServiceGroup> findByNameAndParentGroup(String name, ServiceGroup parentGroup);
 
     /**
-     * Найти группу по имени (для корневых групп)
+     * Find a group by name (for root groups)
      */
     Optional<ServiceGroup> findByNameAndParentGroupIsNull(String name);
 
     /**
-     * Проверить существование группы с таким именем
+     * Check whether a group with this name exists
      */
     boolean existsByNameAndParentGroup(String name, ServiceGroup parentGroup);
 
     /**
-     * Получить количество сервисов в группе
+     * Get the number of services in a group
      */
     @Query("SELECT COUNT(s) FROM com.specpulse.registry.ServiceEntity s WHERE s.group.id = :groupId")
     Integer countServicesByGroupId(@Param("groupId") Long groupId);
 
     /**
-     * Получить все группы с количеством сервисов
+     * Get all groups along with their service counts
      */
     @Query("""
                 SELECT g, COUNT(s) as serviceCount

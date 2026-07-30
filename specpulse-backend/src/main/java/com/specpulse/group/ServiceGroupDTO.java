@@ -24,17 +24,17 @@ public class ServiceGroupDTO {
     private Instant createdAt;
     private Instant updatedAt;
 
-    // Информация о вложенных группах
+    // Information about nested groups
     private List<ServiceGroupDTO> childGroups;
 
-    // Количество сервисов в группе
+    // Number of services in the group
     private Integer serviceCount;
 
-    // Сервисы в группе (опционально, для детального просмотра)
+    // Services in the group (optional, for detailed view)
     private List<GroupServiceDTO> services;
 
     /**
-     * DTO сервиса внутри группы
+     * DTO for a service inside a group
      */
     @Data
     @Builder

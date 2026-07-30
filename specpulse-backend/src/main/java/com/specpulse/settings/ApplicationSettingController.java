@@ -96,7 +96,7 @@ public class ApplicationSettingController {
     }
 
     /**
-     * DTO для валидации обновления настройки
+     * DTO for validating a setting update
      */
     @Data
     public static class SettingUpdateRequest {
