@@ -22,7 +22,6 @@ export const AuthContext = createContext<AuthContextValue>({
     user: null,
     isAuthenticated: false,
     isAdmin: false,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     login: async (_req: LoginRequest) => {
         throw new Error('AuthProvider not mounted');
     },
