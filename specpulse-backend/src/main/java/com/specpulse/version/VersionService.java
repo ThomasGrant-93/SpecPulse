@@ -23,16 +23,13 @@ import java.util.Optional;
 public class VersionService implements SpecVersionPullPort {
 
     private static final ObjectMapper YAML_MAPPER = new ObjectMapper(new YAMLFactory());
-
-    private final SpecVersionRepository repository;
-    private final OpenApiParser parser;
-    private final ObjectMapper objectMapper;
-
     // Guardrails to prevent extremely expensive filtering on very large specs.
     // When exceeded, we fall back to emitting the full left subtree to keep the API responsive.
     private static final long FILTER_TIME_BUDGET_NANOS = 750_000_000L; // 750ms
     private static final int MAX_FILTER_DEPTH = 200;
-
+    private final SpecVersionRepository repository;
+    private final OpenApiParser parser;
+    private final ObjectMapper objectMapper;
     @Value("${specpulse.outbound.max-spec-bytes:2097152}")
     private long maxSpecBytes = 2_097_152L;
 
@@ -191,7 +188,7 @@ public class VersionService implements SpecVersionPullPort {
 
     /**
      * Filter JSON to include only parts that differ between left and right.
-     *
+     * <p>
      * Rules (left-side view):
      * - If a node is equal => omitted from output.
      * - If an object key exists only on the right => emitted as null on the left side.

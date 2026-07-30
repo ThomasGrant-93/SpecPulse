@@ -1,14 +1,14 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { api } from '@/services/api';
 
 import { server } from './server';
 import {
-    mockErrorHandler,
     defaultGroups,
-    mockValidationHandler,
+    mockErrorHandler,
     mockGroupsEmpty,
     mockGroupsNetworkError,
+    mockValidationHandler,
 } from './handlers';
 
 describe('MSW API mocks', () => {

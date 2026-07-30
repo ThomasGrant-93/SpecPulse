@@ -1,5 +1,11 @@
 import axios from 'axios';
-import type { LoginRequest, LoginResponse, MeResponse, RefreshRequest, RefreshResponse } from '@/types';
+import type {
+    LoginRequest,
+    LoginResponse,
+    MeResponse,
+    RefreshRequest,
+    RefreshResponse,
+} from '@/types';
 import { getAccessToken } from './tokenStore';
 
 const API_BASE = '/api/v1';

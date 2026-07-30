@@ -1,16 +1,16 @@
 package com.specpulse.api;
 
+import com.specpulse.auth.repository.UserRepository;
 import com.specpulse.version.SpecVersionDTO;
 import com.specpulse.version.VersionService;
-import com.specpulse.auth.repository.UserRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.context.annotation.Import;
 
 import java.time.Instant;
 
@@ -73,9 +73,9 @@ class VersionControllerDiffOnlyTest {
 
         // When & Then
         mockMvc.perform(get("/api/v1/versions/1")
-                .param("diff_only", "true")
-                .param("compare_to", "2")
-                .accept(MediaType.APPLICATION_JSON))
+                        .param("diff_only", "true")
+                        .param("compare_to", "2")
+                        .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.specContent", equalTo(dto.specContent())));
 

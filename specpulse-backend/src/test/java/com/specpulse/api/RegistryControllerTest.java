@@ -2,22 +2,22 @@ package com.specpulse.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.specpulse.api.mapper.RegistryApiMapper;
-import com.specpulse.registry.RegistryService;
 import com.specpulse.auth.repository.UserRepository;
 import com.specpulse.auth.security.JwtService;
-import com.specpulse.test.JwtTestUtil;
+import com.specpulse.registry.RegistryService;
 import com.specpulse.registry.ServiceDTO;
 import com.specpulse.registry.ServiceValidationRequest;
 import com.specpulse.registry.ServiceValidationResult;
+import com.specpulse.test.JwtTestUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.context.annotation.Import;
 
 import java.util.List;
 

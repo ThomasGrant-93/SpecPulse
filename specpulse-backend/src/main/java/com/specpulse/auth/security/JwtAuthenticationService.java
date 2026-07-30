@@ -1,7 +1,7 @@
 package com.specpulse.auth.security;
 
-import com.specpulse.auth.entity.RoleEntity;
 import com.specpulse.auth.entity.PermissionEntity;
+import com.specpulse.auth.entity.RoleEntity;
 import com.specpulse.auth.entity.UserEntity;
 import com.specpulse.auth.repository.UserRepository;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -9,12 +9,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
-
 import java.util.Optional;
 
 /**
  * Authentication business logic.
- *
+ * <p>
  * Kept out of {@link JwtAuthenticationFilter} so the filter doesn't need to deal with JPA/lazy loading concerns.
  */
 public class JwtAuthenticationService {

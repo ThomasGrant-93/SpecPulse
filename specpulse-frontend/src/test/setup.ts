@@ -2,7 +2,6 @@ import '@testing-library/jest-dom';
 import { cleanup } from '@testing-library/react';
 import { afterAll, afterEach, beforeAll, vi } from 'vitest';
 import { QueryClient } from '@tanstack/react-query'; // Create a default QueryClient for tests
-
 import { server } from './mocks/server';
 
 // Create a default QueryClient for tests

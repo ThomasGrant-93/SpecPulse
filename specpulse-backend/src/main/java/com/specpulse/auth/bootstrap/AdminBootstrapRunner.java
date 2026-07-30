@@ -1,10 +1,13 @@
 package com.specpulse.auth.bootstrap;
 
+import com.specpulse.auth.entity.PermissionEntity;
 import com.specpulse.auth.entity.RoleEntity;
 import com.specpulse.auth.entity.UserEntity;
-import com.specpulse.auth.repository.RoleRepository;
 import com.specpulse.auth.repository.PermissionRepository;
+import com.specpulse.auth.repository.RoleRepository;
 import com.specpulse.auth.repository.UserRepository;
+import com.specpulse.auth.security.RbacPermissions;
+import com.specpulse.auth.security.RbacRoles;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
@@ -14,13 +17,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Set;
 
-import com.specpulse.auth.entity.PermissionEntity;
-import com.specpulse.auth.security.RbacPermissions;
-import com.specpulse.auth.security.RbacRoles;
-
 /**
  * Creates the first ADMIN user in an empty database.
- *
+ * <p>
  * Defaults (can be overridden via env vars):
  * - username: specpulse
  * - password: specpulse

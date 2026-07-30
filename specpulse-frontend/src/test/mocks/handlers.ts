@@ -42,7 +42,10 @@ export function mockValidationHandler(result: { valid: boolean; errors: string[]
     });
 }
 
-export function mockValidationHandlerDelayed(result: { valid: boolean; errors: string[] }, delayMs: number) {
+export function mockValidationHandlerDelayed(
+    result: { valid: boolean; errors: string[] },
+    delayMs: number
+) {
     return http.post('*/api/v1/registry/validate', async () => {
         await new Promise((resolve) => setTimeout(resolve, delayMs));
         return HttpResponse.json(result, { status: 200 });

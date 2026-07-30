@@ -3,12 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Modal } from '@/components/Modal';
 import { useAuth } from '@/features/auth/useAuth';
 import { adminRolesApi, adminUsersApi } from '@/features/users/api';
-import type {
-    AdminRole,
-    AdminUser,
-    CreateAdminUserRequest,
-    UpdateAdminUserRequest,
-} from '@/types';
+import type { AdminRole, AdminUser, CreateAdminUserRequest, UpdateAdminUserRequest } from '@/types';
 import { logger } from '@/utils/logger';
 
 function toggleRoleNames(roleNames: string[], roleName: string): string[] {
@@ -148,40 +143,61 @@ export default function UsersPage() {
 
             <div className="mt-6 bg-white shadow rounded-lg overflow-hidden">
                 <div className="px-4 py-3 border-b flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700">Users ({users.length})</span>
+                    <span className="text-sm font-medium text-gray-700">
+                        Users ({users.length})
+                    </span>
                 </div>
                 <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                             <tr>
-                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Username</th>
-                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Enabled</th>
-                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Roles</th>
-                                <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                    Username
+                                </th>
+                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                    Email
+                                </th>
+                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                    Enabled
+                                </th>
+                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                    Roles
+                                </th>
+                                <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">
+                                    Actions
+                                </th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200">
                             {users.map((user) => (
                                 <tr key={user.id} className="hover:bg-gray-50">
                                     <td className="px-4 py-3">
-                                        <span className="font-medium text-gray-900">{user.username}</span>
+                                        <span className="font-medium text-gray-900">
+                                            {user.username}
+                                        </span>
                                     </td>
                                     <td className="px-4 py-3">
                                         <span className="text-gray-700">{user.email}</span>
                                     </td>
                                     <td className="px-4 py-3">
                                         {user.enabled ? (
-                                            <span className="inline-flex items-center rounded bg-green-100 px-2 py-1 text-xs font-semibold text-green-800">Yes</span>
+                                            <span className="inline-flex items-center rounded bg-green-100 px-2 py-1 text-xs font-semibold text-green-800">
+                                                Yes
+                                            </span>
                                         ) : (
-                                            <span className="inline-flex items-center rounded bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-700">No</span>
+                                            <span className="inline-flex items-center rounded bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-700">
+                                                No
+                                            </span>
                                         )}
                                     </td>
                                     <td className="px-4 py-3">
                                         {user.roles.length > 0 ? (
                                             <div className="flex flex-wrap gap-1">
                                                 {user.roles.map((r) => (
-                                                    <span key={r} className="inline-flex items-center rounded bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700">
+                                                    <span
+                                                        key={r}
+                                                        className="inline-flex items-center rounded bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700"
+                                                    >
                                                         {r}
                                                     </span>
                                                 ))}
@@ -210,7 +226,9 @@ export default function UsersPage() {
                                                 type="button"
                                                 onClick={() => {
                                                     // eslint-disable-next-line no-alert
-                                                    if (confirm(`Delete user '${user.username}'?`)) {
+                                                    if (
+                                                        confirm(`Delete user '${user.username}'?`)
+                                                    ) {
                                                         deleteMutation.mutate(user.id);
                                                     }
                                                 }}
@@ -257,7 +275,9 @@ export default function UsersPage() {
                         <input
                             type="text"
                             value={createForm.username}
-                            onChange={(e) => setCreateForm((prev) => ({ ...prev, username: e.target.value }))}
+                            onChange={(e) =>
+                                setCreateForm((prev) => ({ ...prev, username: e.target.value }))
+                            }
                             className="mt-1 w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
                         />
                     </div>
@@ -266,7 +286,9 @@ export default function UsersPage() {
                         <input
                             type="email"
                             value={createForm.email}
-                            onChange={(e) => setCreateForm((prev) => ({ ...prev, email: e.target.value }))}
+                            onChange={(e) =>
+                                setCreateForm((prev) => ({ ...prev, email: e.target.value }))
+                            }
                             className="mt-1 w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
                         />
                     </div>
@@ -275,7 +297,9 @@ export default function UsersPage() {
                         <input
                             type="password"
                             value={createForm.password}
-                            onChange={(e) => setCreateForm((prev) => ({ ...prev, password: e.target.value }))}
+                            onChange={(e) =>
+                                setCreateForm((prev) => ({ ...prev, password: e.target.value }))
+                            }
                             className="mt-1 w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
                         />
                     </div>
@@ -284,7 +308,9 @@ export default function UsersPage() {
                         <input
                             type="checkbox"
                             checked={createForm.enabled}
-                            onChange={(e) => setCreateForm((prev) => ({ ...prev, enabled: e.target.checked }))}
+                            onChange={(e) =>
+                                setCreateForm((prev) => ({ ...prev, enabled: e.target.checked }))
+                            }
                             className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                         />
                         <span className="text-sm text-gray-700">Enabled</span>
@@ -304,7 +330,10 @@ export default function UsersPage() {
                                             onChange={() =>
                                                 setCreateForm((prev) => ({
                                                     ...prev,
-                                                    roleNames: toggleRoleNames(prev.roleNames, role.name),
+                                                    roleNames: toggleRoleNames(
+                                                        prev.roleNames,
+                                                        role.name
+                                                    ),
                                                 }))
                                             }
                                             className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
@@ -357,7 +386,9 @@ export default function UsersPage() {
                         <input
                             type="email"
                             value={editForm.email}
-                            onChange={(e) => setEditForm((prev) => ({ ...prev, email: e.target.value }))}
+                            onChange={(e) =>
+                                setEditForm((prev) => ({ ...prev, email: e.target.value }))
+                            }
                             className="mt-1 w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
                         />
                     </div>
@@ -366,7 +397,9 @@ export default function UsersPage() {
                         <input
                             type="checkbox"
                             checked={editForm.enabled}
-                            onChange={(e) => setEditForm((prev) => ({ ...prev, enabled: e.target.checked }))}
+                            onChange={(e) =>
+                                setEditForm((prev) => ({ ...prev, enabled: e.target.checked }))
+                            }
                             className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                         />
                         <span className="text-sm text-gray-700">Enabled</span>
@@ -386,7 +419,10 @@ export default function UsersPage() {
                                             onChange={() =>
                                                 setEditForm((prev) => ({
                                                     ...prev,
-                                                    roleNames: toggleRoleNames(prev.roleNames, role.name),
+                                                    roleNames: toggleRoleNames(
+                                                        prev.roleNames,
+                                                        role.name
+                                                    ),
                                                 }))
                                             }
                                             className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"

@@ -13,7 +13,8 @@ Frontend component tests run in isolation using **Mock Service Worker (MSW)**.
 
 1. Edit `src/test/mocks/handlers.ts`.
 2. Add a new handler using `http.get/http.post/...`.
-3. If your endpoint needs custom behavior, export a helper (see examples below) and override with `server.use(...)` in a specific test.
+3. If your endpoint needs custom behavior, export a helper (see examples below) and override with `server.use(...)` in a
+   specific test.
 
 ## Overriding handlers per test
 

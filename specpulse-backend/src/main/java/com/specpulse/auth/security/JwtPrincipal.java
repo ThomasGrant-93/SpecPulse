@@ -1,6 +1,5 @@
 package com.specpulse.auth.security;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 

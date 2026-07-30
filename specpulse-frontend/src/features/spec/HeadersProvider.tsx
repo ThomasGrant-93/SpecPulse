@@ -28,9 +28,15 @@ type HeadersSessionContextValue = {
     state: HeadersSessionState;
     upsertGlobalHeader: (entry: Omit<HeaderEntry, 'name'> & { name: string }) => void;
     removeGlobalHeader: (headerName: string) => void;
-    upsertEndpointHeader: (endpointId: string, entry: Omit<HeaderEntry, 'name'> & { name: string }) => void;
+    upsertEndpointHeader: (
+        endpointId: string,
+        entry: Omit<HeaderEntry, 'name'> & { name: string }
+    ) => void;
     removeEndpointHeader: (endpointId: string, headerName: string) => void;
-    upsertRequestHeader: (endpointId: string, entry: Omit<HeaderEntry, 'name'> & { name: string }) => void;
+    upsertRequestHeader: (
+        endpointId: string,
+        entry: Omit<HeaderEntry, 'name'> & { name: string }
+    ) => void;
     removeRequestHeader: (endpointId: string, headerName: string) => void;
 };
 
@@ -83,7 +89,10 @@ export function HeadersProvider({ children }: { children: ReactNode }) {
         });
     };
 
-    const upsertEndpointHeader: HeadersSessionContextValue['upsertEndpointHeader'] = (endpointId, entry) => {
+    const upsertEndpointHeader: HeadersSessionContextValue['upsertEndpointHeader'] = (
+        endpointId,
+        entry
+    ) => {
         const headerKey = normalizeHeaderName(entry.name);
         setState((prev) => {
             const current = prev.endpoint[endpointId] ?? {};
@@ -100,7 +109,10 @@ export function HeadersProvider({ children }: { children: ReactNode }) {
         });
     };
 
-    const removeEndpointHeader: HeadersSessionContextValue['removeEndpointHeader'] = (endpointId, headerName) => {
+    const removeEndpointHeader: HeadersSessionContextValue['removeEndpointHeader'] = (
+        endpointId,
+        headerName
+    ) => {
         const headerKey = normalizeHeaderName(headerName);
         setState((prev) => {
             const current = prev.endpoint[endpointId] ?? {};
@@ -122,7 +134,10 @@ export function HeadersProvider({ children }: { children: ReactNode }) {
         });
     };
 
-    const upsertRequestHeader: HeadersSessionContextValue['upsertRequestHeader'] = (endpointId, entry) => {
+    const upsertRequestHeader: HeadersSessionContextValue['upsertRequestHeader'] = (
+        endpointId,
+        entry
+    ) => {
         const headerKey = normalizeHeaderName(entry.name);
         setState((prev) => {
             const current = prev.request[endpointId] ?? {};
@@ -139,7 +154,10 @@ export function HeadersProvider({ children }: { children: ReactNode }) {
         });
     };
 
-    const removeRequestHeader: HeadersSessionContextValue['removeRequestHeader'] = (endpointId, headerName) => {
+    const removeRequestHeader: HeadersSessionContextValue['removeRequestHeader'] = (
+        endpointId,
+        headerName
+    ) => {
         const headerKey = normalizeHeaderName(headerName);
         setState((prev) => {
             const current = prev.request[endpointId] ?? {};
@@ -174,7 +192,9 @@ export function HeadersProvider({ children }: { children: ReactNode }) {
         [state]
     );
 
-    return <HeadersSessionContext.Provider value={value}>{children}</HeadersSessionContext.Provider>;
+    return (
+        <HeadersSessionContext.Provider value={value}>{children}</HeadersSessionContext.Provider>
+    );
 }
 
 export function useHeadersSession(): HeadersSessionContextValue {

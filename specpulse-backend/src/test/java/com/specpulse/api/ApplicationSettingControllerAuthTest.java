@@ -2,19 +2,19 @@ package com.specpulse.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.specpulse.api.mapper.ApplicationSettingApiMapper;
-import com.specpulse.settings.ApplicationSettingDTO;
-import com.specpulse.settings.ApplicationSettingService;
 import com.specpulse.auth.repository.UserRepository;
 import com.specpulse.auth.security.JwtService;
+import com.specpulse.settings.ApplicationSettingDTO;
+import com.specpulse.settings.ApplicationSettingService;
 import com.specpulse.test.JwtTestUtil;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.context.annotation.Import;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;

@@ -2,11 +2,7 @@ package com.specpulse.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.specpulse.auth.repository.UserRepository;
-import com.specpulse.auth.security.JwtAuthenticationEntryPoint;
-import com.specpulse.auth.security.JwtAuthenticationFilter;
-import com.specpulse.auth.security.JwtAuthenticationService;
-import com.specpulse.auth.security.JwtProperties;
-import com.specpulse.auth.security.JwtService;
+import com.specpulse.auth.security.*;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,8 +13,6 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-
-import com.specpulse.auth.security.RbacPermissions;
 
 @Configuration
 @EnableMethodSecurity(prePostEnabled = true)

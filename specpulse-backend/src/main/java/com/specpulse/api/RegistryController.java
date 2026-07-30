@@ -5,7 +5,6 @@ import com.specpulse.registry.RegistryService;
 import com.specpulse.registry.ServiceDTO;
 import com.specpulse.registry.ServiceWithVersionDTO;
 import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 

@@ -5,11 +5,11 @@ import com.specpulse.client.OutboundUrlSecurity;
 import com.specpulse.exception.DuplicateResourceException;
 import com.specpulse.exception.ResourceNotFoundException;
 import com.specpulse.version.VersionService;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import io.swagger.v3.oas.annotations.media.Schema;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

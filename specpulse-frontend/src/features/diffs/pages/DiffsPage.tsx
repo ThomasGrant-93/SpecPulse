@@ -79,8 +79,12 @@ export default function DiffsPage() {
 
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900">{service?.name} - Breaking Changes</h1>
-                        <p className="text-gray-600 mt-1">Compare OpenAPI specifications between versions</p>
+                        <h1 className="text-2xl font-bold text-gray-900">
+                            {service?.name} - Breaking Changes
+                        </h1>
+                        <p className="text-gray-600 mt-1">
+                            Compare OpenAPI specifications between versions
+                        </p>
                     </div>
                     {breakingChangesCount > 0 && (
                         <span className="inline-flex items-center rounded-md bg-red-100 px-3 py-2 text-sm font-medium text-red-800">
@@ -118,22 +122,43 @@ export default function DiffsPage() {
                                 <option value="">Select version...</option>
                                 {versions.map((version, index) => (
                                     <option key={version.id} value={version.id}>
-                                        v{versions.length - index} — {version.specTitle || 'Unknown'} (
+                                        v{versions.length - index} —{' '}
+                                        {version.specTitle || 'Unknown'} (
                                         {new Date(version.pulledAt).toLocaleDateString()})
                                     </option>
                                 ))}
                             </select>
                             <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
-                                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                <svg
+                                    className="h-4 w-4"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M19 9l-7 7-7-7"
+                                    />
                                 </svg>
                             </div>
                         </div>
                     </div>
 
                     <div className="pt-6">
-                        <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                        <svg
+                            className="h-5 w-5 text-gray-400"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M17 8l4 4m0 0l-4 4m4-4H3"
+                            />
                         </svg>
                     </div>
 
@@ -154,14 +179,25 @@ export default function DiffsPage() {
                                         value={version.id}
                                         disabled={version.id === selectedFromVersion}
                                     >
-                                        v{versions.length - index} — {version.specTitle || 'Unknown'} (
+                                        v{versions.length - index} —{' '}
+                                        {version.specTitle || 'Unknown'} (
                                         {new Date(version.pulledAt).toLocaleDateString()})
                                     </option>
                                 ))}
                             </select>
                             <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
-                                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                <svg
+                                    className="h-4 w-4"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M19 9l-7 7-7-7"
+                                    />
                                 </svg>
                             </div>
                         </div>
@@ -174,17 +210,21 @@ export default function DiffsPage() {
                     </div>
                 )}
 
-                {selectedFromVersion && selectedToVersion && (!fromVersionSpec || !toVersionSpec) && (
-                    <div className="mt-4 text-center py-8">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto" />
-                        <p className="mt-2 text-gray-600">Loading spec content...</p>
-                    </div>
-                )}
+                {selectedFromVersion &&
+                    selectedToVersion &&
+                    (!fromVersionSpec || !toVersionSpec) && (
+                        <div className="mt-4 text-center py-8">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto" />
+                            <p className="mt-2 text-gray-600">Loading spec content...</p>
+                        </div>
+                    )}
             </div>
 
             <div className="bg-white rounded-lg shadow">
                 <div className="border-b px-6 py-4">
-                    <h2 className="text-lg font-semibold text-gray-900">Historical Comparisons ({diffs.length})</h2>
+                    <h2 className="text-lg font-semibold text-gray-900">
+                        Historical Comparisons ({diffs.length})
+                    </h2>
                 </div>
                 <DiffViewer diffs={diffs} />
             </div>

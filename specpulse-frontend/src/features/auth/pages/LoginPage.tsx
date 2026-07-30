@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import type { LoginRequest } from '@/types';
 import { useAuth } from '../useAuth';
 
@@ -40,7 +40,9 @@ export default function LoginPage() {
             <div className="w-full max-w-md">
                 <div className="bg-white shadow rounded-lg p-6 dark:bg-gray-800">
                     <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Login</h1>
-                    <p className="text-sm text-gray-600 dark:text-gray-300 mt-2">Use an ADMIN account to manage services.</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-300 mt-2">
+                        Use an ADMIN account to manage services.
+                    </p>
 
                     {error && (
                         <div
@@ -53,7 +55,9 @@ export default function LoginPage() {
 
                     <form onSubmit={handleSubmit} className="mt-6 space-y-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Username</label>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Username
+                            </label>
                             <input
                                 value={username}
                                 onChange={(e) => setUsername(e.target.value)}
@@ -63,7 +67,9 @@ export default function LoginPage() {
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Password
+                            </label>
                             <input
                                 type="password"
                                 value={password}
