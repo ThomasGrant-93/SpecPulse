@@ -1,8 +1,12 @@
 const typescriptParser = require('@typescript-eslint/parser');
+const typescriptEslintPlugin = require('@typescript-eslint/eslint-plugin');
 
 module.exports = [
     {
         files: ['**/*.{ts,tsx}'],
+        plugins: {
+            '@typescript-eslint': typescriptEslintPlugin,
+        },
         languageOptions: {
             ecmaVersion: 2020,
             sourceType: 'module',
