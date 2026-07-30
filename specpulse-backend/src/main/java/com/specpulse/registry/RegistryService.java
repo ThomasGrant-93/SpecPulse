@@ -9,6 +9,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -204,25 +205,44 @@ public class RegistryService {
         );
     }
 
+    @Schema(
+            description = "Create a new service registration",
+            example = "{\"name\":\"petstore\",\"openApiUrl\":\"https://api.example.com/openapi.json\",\"description\":\"Example service\",\"enabled\":true,\"groupId\":1}"
+    )
     public record CreateServiceRequest(
+            @Schema(description = "Service display name", example = "petstore")
             @NotBlank(message = "Name is required")
             String name,
+            @Schema(description = "OpenAPI document URL", example = "https://api.example.com/openapi.json")
             @NotBlank(message = "OpenAPI URL is required")
             @Pattern(regexp = "^https?://.+$", message = "Invalid URL format. Must start with http:// or https://")
             String openApiUrl,
+            @Schema(description = "Optional service description", example = "Example service")
             String description,
+            @Schema(description = "Whether the service is enabled", example = "true")
             Boolean enabled,
+            @Schema(description = "Optional service group id", example = "1")
             Long groupId
     ) {
     }
 
+    @Schema(
+            description = "Update an existing service registration",
+            example = "{\"name\":\"petstore\",\"openApiUrl\":\"https://api.example.com/openapi.json\",\"description\":\"Example service\",\"enabled\":true,\"groupId\":1,\"clearGroup\":false}"
+    )
     public record UpdateServiceRequest(
+            @Schema(description = "Optional service display name", example = "petstore")
             String name,
+            @Schema(description = "Optional OpenAPI document URL", example = "https://api.example.com/openapi.json")
             @Pattern(regexp = "^https?://.+$", message = "Invalid URL format. Must start with http:// or https://")
             String openApiUrl,
+            @Schema(description = "Optional service description", example = "Example service")
             String description,
+            @Schema(description = "Optional enabled flag", example = "true")
             Boolean enabled,
+            @Schema(description = "Optional service group id", example = "1")
             Long groupId,
+            @Schema(description = "When true, clears existing group assignment", example = "false")
             Boolean clearGroup
     ) {
     }

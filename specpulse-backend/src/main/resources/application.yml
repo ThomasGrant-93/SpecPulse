@@ -30,6 +30,12 @@ springdoc:
   swagger-ui:
     # Expose the interactive documentation under the conventional route.
     path: /swagger-ui
+    # Ensure referenced component schemas (e.g. request bodies) are expanded
+    # in the Swagger UI renderer instead of showing only a raw $ref.
+    defaultModelsExpandDepth: 5
+    defaultModelExpandDepth: 5
+    defaultModelRendering: model
+    docExpansion: full
 
 # Scheduler configuration
 specpulse:
