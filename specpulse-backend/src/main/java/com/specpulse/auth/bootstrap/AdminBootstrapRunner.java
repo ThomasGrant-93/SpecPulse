@@ -15,6 +15,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -75,7 +76,10 @@ public class AdminBootstrapRunner implements ApplicationRunner {
         adminUser.setEmail(adminEmail);
         adminUser.setPasswordHash(passwordEncoder.encode(adminPassword));
         adminUser.setEnabled(true);
-        adminUser.setRoles(Set.of(adminRole));
+        // Hibernate replaces collection elements during merge/flush.
+        // JDK immutable collections (Set.of/ List.of) are not mutable and can cause
+        // UnsupportedOperationException when Hibernate tries to clear/replace elements.
+        adminUser.setRoles(new HashSet<>(Set.of(adminRole)));
 
         userRepository.save(adminUser);
     }
@@ -108,7 +112,8 @@ public class AdminBootstrapRunner implements ApplicationRunner {
                     return r;
                 });
 
-        role.setPermissions(permissions);
+        // Use mutable collections for JPA-managed collections.
+        role.setPermissions(new HashSet<>(permissions));
         return roleRepository.save(role);
     }
 }
