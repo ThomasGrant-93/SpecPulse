@@ -2,9 +2,9 @@ package com.specpulse.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.specpulse.api.mapper.RegistryApiMapper;
-import com.specpulse.auth.repository.UserRepository;
+import com.specpulse.auth.infrastructure.UserRepository;
 import com.specpulse.auth.security.JwtService;
-import com.specpulse.registry.RegistryService;
+import com.specpulse.registry.application.RegistryService;
 import com.specpulse.registry.ServiceDTO;
 import com.specpulse.registry.ServiceValidationRequest;
 import com.specpulse.registry.ServiceValidationResult;
