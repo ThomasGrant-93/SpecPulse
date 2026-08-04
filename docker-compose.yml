@@ -39,7 +39,7 @@ services:
       SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME:-specpulse}
       SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:-specpulse}
       SPRING_PROFILES_ACTIVE: docker
-      JAVA_OPTS: "-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0"
+      JAVA_OPTS: "-XX:+UseContainerSupport -Xms1g -Xmx1g -Djava.security.egd=file:/dev/./urandom"
       LOGGING_LEVEL_ROOT: INFO
       LOGGING_LEVEL_COM_SPECPULSE: DEBUG
     ports:
