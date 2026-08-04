@@ -14,8 +14,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -46,9 +48,17 @@ public class VersionService implements SpecVersionPullPort {
                 .map(SpecVersionDTO::fromEntity);
     }
 
+    /**
+     * Batch version fetch (latest per service) to avoid N+1 lookups.
+     *
+     * <p>Returns entities to avoid serializing potentially large OpenAPI content.
+     */
     @Transactional(readOnly = true)
-    public Optional<SpecVersionEntity> getLatestVersionEntity(Long serviceId) {
-        return repository.findFirstByServiceIdOrderByPulledAtDesc(serviceId);
+    public List<SpecVersionEntity> getLatestVersionEntitiesByServiceIds(Set<Long> serviceIds) {
+        if (serviceIds == null || serviceIds.isEmpty()) {
+            return List.of();
+        }
+        return repository.findLatestByServiceIds(serviceIds);
     }
 
     /**

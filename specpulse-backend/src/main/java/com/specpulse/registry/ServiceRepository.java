@@ -24,22 +24,11 @@ public interface ServiceRepository extends JpaRepository<ServiceEntity, Long> {
      * Uses PostgreSQL tsvector with ranking
      */
     @Query(value = """
-            SELECT s.*, ts_rank(s.search_vector, plainto_tsquery('english', :query)) as rank
-            FROM services s
-            WHERE s.enabled = true
-              AND s.search_vector @@ plainto_tsquery('english', :query)
-            ORDER BY rank DESC
-            """, nativeQuery = true)
+             SELECT s.*, ts_rank(s.search_vector, plainto_tsquery('english', :query)) as rank
+             FROM services s
+             WHERE s.enabled = true
+               AND s.search_vector @@ plainto_tsquery('english', :query)
+             ORDER BY rank DESC
+             """, nativeQuery = true)
     List<ServiceEntity> search(@Param("query") String query);
-
-    /**
-     * Simple search for disabled services too
-     */
-    @Query(value = """
-            SELECT s.*, ts_rank(s.search_vector, plainto_tsquery('english', :query)) as rank
-            FROM services s
-            WHERE s.search_vector @@ plainto_tsquery('english', :query)
-            ORDER BY rank DESC
-            """, nativeQuery = true)
-    List<ServiceEntity> searchAll(@Param("query") String query);
 }

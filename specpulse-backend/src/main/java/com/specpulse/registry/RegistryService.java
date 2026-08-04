@@ -14,6 +14,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.LinkedHashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -35,13 +39,31 @@ public class RegistryService {
 
     @Transactional(readOnly = true)
     public List<ServiceWithVersionDTO> getAllServicesWithVersions() {
-        return repository.findAll().stream()
+        List<ServiceEntity> services = repository.findAll();
+        Set<Long> serviceIds = services.stream().map(ServiceEntity::getId).collect(Collectors.toSet());
+
+        Map<Long, com.specpulse.version.SpecVersionEntity> latestByServiceId = versionService
+                .getLatestVersionEntitiesByServiceIds(serviceIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        v -> v.getService().getId(),
+                        v -> v,
+                        (existing, ignored) -> existing
+                ));
+
+        return services.stream()
                 .map(entity -> {
-                    var latestVersion = versionService.getLatestVersion(entity.getId())
-                            .map(v -> new ServiceWithVersionDTO.LatestVersionInfo(
-                                    v.id(), v.versionHash(), v.specVersion(), v.specTitle(), v.fileSizeBytes(), v.pulledAt()
-                            ))
-                            .orElse(null);
+                    var latestEntity = latestByServiceId.get(entity.getId());
+                    var latestVersion = latestEntity != null
+                            ? new ServiceWithVersionDTO.LatestVersionInfo(
+                                    latestEntity.getId(),
+                                    latestEntity.getVersionHash(),
+                                    latestEntity.getSpecVersion(),
+                                    latestEntity.getSpecTitle(),
+                                    latestEntity.getFileSizeBytes(),
+                                    latestEntity.getPulledAt()
+                            )
+                            : null;
                     return ServiceWithVersionDTO.fromEntity(entity, latestVersion);
                 })
                 .toList();
@@ -167,19 +189,20 @@ public class RegistryService {
             return List.of();
         }
         String trimmedQuery = query.trim().toLowerCase();
-        List<String> suggestions = repository.suggestServiceNames(trimmedQuery);
+        LinkedHashSet<String> suggestions = new LinkedHashSet<>(repository.suggestServiceNames(trimmedQuery));
 
         // Add description-based suggestions if we don't have enough
         if (suggestions.size() < 5) {
             List<String> descSuggestions = repository.suggestByDescription(trimmedQuery);
             for (String suggestion : descSuggestions) {
-                if (!suggestions.contains(suggestion) && suggestions.size() < 10) {
-                    suggestions.add(suggestion);
+                if (suggestions.size() >= 10) {
+                    break;
                 }
+                suggestions.add(suggestion);
             }
         }
 
-        return suggestions;
+        return suggestions.stream().toList();
     }
 
     /**
@@ -192,6 +215,9 @@ public class RegistryService {
         if (repository.existsByName(request.name())) {
             errors.add("Service with name '" + request.name() + "' already exists");
         }
+
+        // Validate OpenAPI URL (SSRF hardening happens inside outboundUrlSecurity)
+        outboundUrlSecurity.validateOpenApiUrl(request.openApiUrl());
 
         // Validate OpenAPI URL
         var validationResult = openApiClient.validateOpenApiSpec(request.openApiUrl());

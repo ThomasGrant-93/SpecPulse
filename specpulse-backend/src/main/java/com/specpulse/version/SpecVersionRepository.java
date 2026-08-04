@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -13,10 +14,16 @@ public interface SpecVersionRepository extends JpaRepository<SpecVersionEntity, 
 
     List<SpecVersionEntity> findByServiceIdOrderByPulledAtDesc(Long serviceId);
 
-    Optional<SpecVersionEntity> findByServiceIdAndVersionHash(Long serviceId, String versionHash);
-
     Optional<SpecVersionEntity> findFirstByServiceIdOrderByPulledAtDesc(Long serviceId);
 
-    @Query("SELECT sv FROM SpecVersionEntity sv WHERE sv.service.id = :serviceId ORDER BY sv.pulledAt DESC LIMIT :limit")
-    List<SpecVersionEntity> findByServiceIdLimit(@Param("serviceId") Long serviceId, @Param("limit") int limit);
+    // PostgreSQL-specific: pick the latest row per service_id in one query.
+    @Query(
+            value = "SELECT DISTINCT ON (sv.service_id) sv.* " +
+                    "FROM spec_versions sv " +
+                    "WHERE sv.service_id IN (:serviceIds) " +
+                    "ORDER BY sv.service_id, sv.pulled_at DESC",
+            nativeQuery = true
+    )
+    List<SpecVersionEntity> findLatestByServiceIds(@Param("serviceIds") Collection<Long> serviceIds);
+
 }
