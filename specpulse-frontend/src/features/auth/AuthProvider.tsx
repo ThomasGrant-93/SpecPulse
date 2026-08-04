@@ -2,10 +2,9 @@ import { createContext, PropsWithChildren, useEffect, useMemo, useState } from '
 import { useNavigate } from 'react-router-dom';
 import type { LoginRequest, LoginResponse, MeResponse } from '@/types';
 import { authService } from './authApi';
+import { api } from '@/services/api';
 import {
     clearTokens,
-    getAccessToken,
-    getRefreshToken,
     hydrateTokensFromStorage,
     setTokens,
 } from './tokenStore';
@@ -42,15 +41,10 @@ export default function AuthProvider({ children }: PropsWithChildren) {
 
     useEffect(() => {
         if (!hydrated) return;
-        const a = getAccessToken();
-        const r = getRefreshToken();
-        if (!a || !r) {
-            setUser(null);
-            return;
-        }
 
-        authService
-            .me()
+        // Always call /auth/me and let the API client refresh access tokens using the refresh cookie when needed.
+        api
+            .get<MeResponse>('/auth/me')
             .then((res) => setUser(res.data))
             .catch(() => {
                 clearTokens();
@@ -69,25 +63,40 @@ export default function AuthProvider({ children }: PropsWithChildren) {
             login: async (request: LoginRequest) => {
                 const res = await authService.login(request);
                 const tokens = res.data;
-                setTokens({ accessToken: tokens.accessToken, refreshToken: tokens.refreshToken });
-                const meRes = await authService.me();
+                setTokens({ accessToken: tokens.accessToken });
+                const meRes = await api.get<MeResponse>('/auth/me');
                 setUser(meRes.data);
                 navigate('/');
                 return tokens;
             },
             logout: () => {
-                clearTokens();
-                setUser(null);
-                navigate('/login');
+                authService
+                    .logout()
+                    .catch(() => {
+                        // Even if logout request fails, clear local tokens and rely on refresh cookie invalidation.
+                        return;
+                    })
+                    .finally(() => {
+                        clearTokens();
+                        setUser(null);
+                        navigate('/login');
+                    });
             },
         };
     }, [navigate, user]);
 
     useEffect(() => {
         const handler = () => {
-            clearTokens();
-            setUser(null);
-            navigate('/login');
+            authService
+                .logout()
+                .catch(() => {
+                    return;
+                })
+                .finally(() => {
+                    clearTokens();
+                    setUser(null);
+                    navigate('/login');
+                });
         };
         window.addEventListener('specpulse:auth:logout', handler);
         return () => window.removeEventListener('specpulse:auth:logout', handler);

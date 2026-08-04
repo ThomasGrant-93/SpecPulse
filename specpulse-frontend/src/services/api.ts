@@ -1,6 +1,6 @@
 import axios, { type AxiosError } from 'axios';
 import { authService } from '@/features/auth/authApi';
-import { clearTokens, getAccessToken, getRefreshToken, setTokens } from '@/features/auth/tokenStore';
+import { clearTokens, getAccessToken, setTokens } from '@/features/auth/tokenStore';
 import { isTestEnvironment } from '@/utils/testEnv';
 import type {
     ApplicationSetting,
@@ -85,15 +85,8 @@ api.interceptors.response.use(
         if (error.response?.status === 401) {
             const config = error.config as RetryAxiosRequestConfig;
             const url = config.url ?? '';
-            const isAuthCall = url.includes('/auth/login') || url.includes('/auth/refresh') || url.endsWith('/auth/me');
+            const isAuthCall = url.includes('/auth/login') || url.includes('/auth/refresh');
             if (isAuthCall || config.__authRetry) {
-                clearTokens();
-                window.dispatchEvent(new Event('specpulse:auth:logout'));
-                return Promise.reject(error);
-            }
-
-            const refresh = getRefreshToken();
-            if (!refresh) {
                 clearTokens();
                 window.dispatchEvent(new Event('specpulse:auth:logout'));
                 return Promise.reject(error);
@@ -103,10 +96,15 @@ api.interceptors.response.use(
 
             if (!refreshInFlight) {
                 refreshInFlight = authService
-                    .refresh({ refreshToken: refresh })
+                    .refresh()
                     .then((res) => {
-                        setTokens({ accessToken: res.data.accessToken, refreshToken: res.data.refreshToken });
+                        setTokens({ accessToken: res.data.accessToken });
                         return res.data.accessToken;
+                    })
+                    .catch((e) => {
+                        clearTokens();
+                        window.dispatchEvent(new Event('specpulse:auth:logout'));
+                        throw e;
                     })
                     .finally(() => {
                         refreshInFlight = null;

@@ -3,7 +3,6 @@ import type {
     LoginRequest,
     LoginResponse,
     MeResponse,
-    RefreshRequest,
     RefreshResponse,
 } from '@/types';
 import { getAccessToken } from './tokenStore';
@@ -16,6 +15,7 @@ const authApi = axios.create({
     headers: {
         'Content-Type': 'application/json',
     },
+    withCredentials: true,
 });
 
 authApi.interceptors.request.use((config) => {
@@ -38,6 +38,7 @@ authApi.interceptors.request.use((config) => {
 
 export const authService = {
     login: (request: LoginRequest) => authApi.post<LoginResponse>('/auth/login', request),
-    refresh: (request: RefreshRequest) => authApi.post<RefreshResponse>('/auth/refresh', request),
+    refresh: () => authApi.post<RefreshResponse>('/auth/refresh'),
     me: () => authApi.get<MeResponse>('/auth/me'),
+    logout: () => authApi.post<void>('/auth/logout'),
 };
