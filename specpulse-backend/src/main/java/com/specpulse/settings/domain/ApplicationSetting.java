@@ -1,4 +1,4 @@
-package com.specpulse.settings;
+package com.specpulse.settings.domain;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.hypersistence.utils.hibernate.type.json.JsonType;

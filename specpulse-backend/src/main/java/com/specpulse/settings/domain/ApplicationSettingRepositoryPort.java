@@ -1,4 +1,4 @@
-package com.specpulse.settings;
+package com.specpulse.settings.domain;
 
 import java.util.List;
 import java.util.Optional;

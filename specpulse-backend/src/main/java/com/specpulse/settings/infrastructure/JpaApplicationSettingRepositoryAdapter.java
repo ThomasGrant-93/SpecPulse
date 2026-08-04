@@ -1,6 +1,9 @@
-package com.specpulse.settings;
+package com.specpulse.settings.infrastructure;
 
 import org.springframework.stereotype.Component;
+
+import com.specpulse.settings.domain.ApplicationSetting;
+import com.specpulse.settings.domain.ApplicationSettingRepositoryPort;
 
 import java.util.List;
 import java.util.Optional;
