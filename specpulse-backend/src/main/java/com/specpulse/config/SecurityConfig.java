@@ -13,6 +13,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 
 @Configuration
 @EnableMethodSecurity(prePostEnabled = true)
@@ -44,12 +45,36 @@ public class SecurityConfig {
             HttpSecurity http,
             JwtAuthenticationFilter jwtAuthenticationFilter,
             JwtAuthenticationEntryPoint entryPoint,
-            JwtProperties jwtProperties
+            JwtProperties jwtProperties,
+            RefreshCsrfFilter refreshCsrfFilter
     ) throws Exception {
         http
                 .cors(Customizer.withDefaults())
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .headers(headers -> headers
+                        // Basic hardening against MIME sniffing / clickjacking.
+                        .contentTypeOptions(Customizer.withDefaults())
+                        .frameOptions(frame -> frame.deny())
+                        .referrerPolicy(referrer -> referrer
+                                .policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
+                        // CSP baseline: allows SPA assets and keeps swagger UI working by permitting unsafe-inline/eval.
+                        // This is intentionally conservative to avoid breaking existing UI routes.
+                        .contentSecurityPolicy(csp -> csp
+                                .policyDirectives(
+                                        "default-src 'self'; " +
+                                                "base-uri 'self'; " +
+                                                "object-src 'none'; " +
+                                                "frame-ancestors 'none'; " +
+                                                "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
+                                                "style-src 'self' 'unsafe-inline'; " +
+                                                "img-src 'self' data:; " +
+                                                "font-src 'self' data:; " +
+                                                "connect-src 'self' ws:; " +
+                                                "form-action 'self'; " +
+                                                "upgrade-insecure-requests"
+                                ))
+                )
                 .exceptionHandling(eh -> eh.authenticationEntryPoint(entryPoint));
 
         if (!jwtProperties.isEnabled()) {
@@ -57,6 +82,8 @@ public class SecurityConfig {
                     .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                     .anyRequest().permitAll()
             );
+
+            http.addFilterBefore(refreshCsrfFilter, UsernamePasswordAuthenticationFilter.class);
             return http.build();
         }
 
@@ -108,6 +135,8 @@ public class SecurityConfig {
                         .anyRequest().permitAll()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
+        http.addFilterBefore(refreshCsrfFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
