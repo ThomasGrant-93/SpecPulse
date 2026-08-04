@@ -1,5 +1,6 @@
 package com.specpulse.diff;
 
+import com.specpulse.diff.domain.SpecDiffEntity;
 import java.time.Instant;
 
 public record SpecDiffDTO(

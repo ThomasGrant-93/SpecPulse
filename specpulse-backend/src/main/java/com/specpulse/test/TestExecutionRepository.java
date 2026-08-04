@@ -1,5 +1,6 @@
 package com.specpulse.test;
 
+import com.specpulse.test.domain.TestExecutionEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

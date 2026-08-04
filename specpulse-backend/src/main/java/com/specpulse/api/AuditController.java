@@ -2,7 +2,7 @@ package com.specpulse.api;
 
 import com.specpulse.history.AuditEventType;
 import com.specpulse.history.AuditLogDTO;
-import com.specpulse.history.AuditReadPort;
+import com.specpulse.history.domain.AuditReadPort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

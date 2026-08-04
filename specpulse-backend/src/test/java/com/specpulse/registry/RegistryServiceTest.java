@@ -3,6 +3,10 @@ package com.specpulse.registry;
 import com.specpulse.client.OutboundUrlSecurity;
 import com.specpulse.exception.DuplicateResourceException;
 import com.specpulse.exception.ResourceNotFoundException;
+import com.specpulse.registry.application.RegistryService;
+import com.specpulse.registry.domain.ServiceEntity;
+import com.specpulse.registry.domain.RegistryRepositoryPort;
+import com.specpulse.registry.domain.ServiceGroupLookupPort;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -27,7 +31,7 @@ class RegistryServiceTest {
     private RegistryRepositoryPort repository;
 
     @Mock
-    private com.specpulse.version.VersionService versionService;
+    private com.specpulse.version.application.VersionService versionService;
 
     @Mock
     private com.specpulse.client.OpenApiSpecPort openApiClient;

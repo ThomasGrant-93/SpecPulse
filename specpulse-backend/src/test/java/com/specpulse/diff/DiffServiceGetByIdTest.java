@@ -1,7 +1,8 @@
 package com.specpulse.diff;
 
 import com.specpulse.exception.ResourceNotFoundException;
-import com.specpulse.version.VersionService;
+import com.specpulse.diff.application.DiffService;
+import com.specpulse.version.application.VersionService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,7 +18,7 @@ import static org.mockito.Mockito.when;
 class DiffServiceGetByIdTest {
 
     @Mock
-    private SpecDiffRepository repository;
+    private com.specpulse.diff.infrastructure.SpecDiffRepository repository;
 
     @Mock
     private VersionService versionService;

@@ -1,6 +1,7 @@
 package com.specpulse.registry;
 
-import com.specpulse.entity.ServiceGroup;
+import com.specpulse.group.domain.ServiceGroup;
+import com.specpulse.registry.domain.ServiceEntity;
 
 import java.time.Instant;
 

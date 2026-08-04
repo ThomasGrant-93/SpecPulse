@@ -2,11 +2,14 @@ package com.specpulse.scheduler;
 
 import com.specpulse.client.OpenApiSpecPort;
 import com.specpulse.client.SpecFetchResult;
-import com.specpulse.diff.SpecDiffPort;
+import com.specpulse.diff.domain.SpecDiffPort;
 import com.specpulse.history.AuditEventType;
-import com.specpulse.history.AuditLogPort;
-import com.specpulse.registry.RegistryService;
+import com.specpulse.history.domain.AuditLogPort;
+import com.specpulse.registry.application.RegistryService;
 import com.specpulse.registry.ServiceDTO;
+import com.specpulse.scheduler.application.SpecPullScheduler;
+import com.specpulse.scheduler.domain.PullExecutionEntity;
+import com.specpulse.scheduler.domain.PullExecutionStorePort;
 import com.specpulse.version.SpecVersionPullPort;
 import com.specpulse.version.SpecVersionPullResult;
 import org.junit.jupiter.api.BeforeEach;

@@ -1,5 +1,6 @@
 package com.specpulse.diff;
 
+import com.specpulse.diff.application.DiffService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 

@@ -1,7 +1,7 @@
 package com.specpulse.api;
 
 import com.specpulse.diff.DiffResultDTO;
-import com.specpulse.diff.DiffService;
+import com.specpulse.diff.application.DiffService;
 import com.specpulse.diff.SpecDiffDTO;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

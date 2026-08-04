@@ -1,0 +1,343 @@
+package com.specpulse.group.application;
+
+import com.specpulse.group.domain.ServiceGroup;
+import com.specpulse.group.CreateGroupRequest;
+import com.specpulse.group.ServiceGroupDTO;
+import com.specpulse.group.UpdateGroupRequest;
+import com.specpulse.group.infrastructure.ServiceGroupRepository;
+import com.specpulse.exception.ResourceNotFoundException;
+import com.specpulse.registry.domain.ServiceEntity;
+import com.specpulse.registry.infrastructure.ServiceRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+@Slf4j
+@Transactional(readOnly = true)
+public class ServiceGroupService {
+
+    private final ServiceGroupRepository groupRepository;
+    private final ServiceRepository serviceRepository;
+
+    /**
+     * Get all groups with hierarchy
+     */
+    public List<ServiceGroupDTO> getAllGroups() {
+        List<ServiceGroup> allGroups = groupRepository.findAll();
+        return buildGroupTreeWithServiceCount(allGroups, null);
+    }
+
+    /**
+     * Build a group tree with a service counter
+     */
+    private List<ServiceGroupDTO> buildGroupTreeWithServiceCount(List<ServiceGroup> allGroups, Long parentId) {
+        return allGroups.stream()
+                .filter(g -> {
+                    if (parentId == null) {
+                        return g.getParentGroup() == null;
+                    }
+                    return g.getParentGroup() != null && g.getParentGroup().getId().equals(parentId);
+                })
+                .map(group -> {
+                    ServiceGroupDTO dto = toDTOWithServiceCount(group);
+                    dto.setChildGroups(buildGroupTreeWithServiceCount(allGroups, group.getId()));
+                    return dto;
+                })
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Get root groups
+     */
+    public List<ServiceGroupDTO> getRootGroups() {
+        List<ServiceGroup> rootGroups = groupRepository.findByParentGroupIsNullOrderBySortOrderAsc();
+        return rootGroups.stream()
+                .map(this::toDTOWithServiceCount)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Get group by ID with services
+     */
+    public ServiceGroupDTO getGroupById(Long id, boolean includeServices) {
+        ServiceGroup group = groupRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Group", id));
+
+        ServiceGroupDTO dto = toDTO(group);
+        dto.setServiceCount(groupRepository.countServicesByGroupId(id));
+
+        if (includeServices) {
+            List<ServiceEntity> services = serviceRepository.findByGroupIdOrderByCreatedAtDesc(id);
+            dto.setServices(services.stream()
+                    .map(this::toServiceDTO)
+                    .collect(Collectors.toList()));
+        }
+
+        return dto;
+    }
+
+    /**
+     * Create a new group
+     */
+    @Transactional
+    public ServiceGroupDTO createGroup(CreateGroupRequest request) {
+        // Check maximum nesting depth (max 10 levels)
+        if (request.getParentGroupId() != null) {
+            int depth = calculateDepth(request.getParentGroupId());
+            if (depth >= 10) {
+                throw new IllegalArgumentException("Maximum nesting depth (10 levels) exceeded");
+            }
+
+            ServiceGroup parent = groupRepository.findById(request.getParentGroupId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Parent group", request.getParentGroupId()));
+
+            if (groupRepository.existsByNameAndParentGroup(request.getName(), parent)) {
+                throw new IllegalArgumentException("Group with this name already exists under the parent");
+            }
+        } else {
+            if (groupRepository.findByNameAndParentGroupIsNull(request.getName()).isPresent()) {
+                throw new IllegalArgumentException("Root group with this name already exists");
+            }
+        }
+
+        ServiceGroup group = new ServiceGroup();
+        group.setName(request.getName());
+        group.setDescription(request.getDescription());
+        group.setColor(request.getColor());
+        group.setIcon(request.getIcon());
+        group.setSortOrder(request.getSortOrder());
+
+        if (request.getParentGroupId() != null) {
+            ServiceGroup parent = groupRepository.findById(request.getParentGroupId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Parent group", request.getParentGroupId()));
+            group.setParentGroup(parent);
+        }
+
+        ServiceGroup saved = groupRepository.save(group);
+        log.info("Created service group: id={}, name={}", saved.getId(), saved.getName());
+
+        return toDTO(saved);
+    }
+
+    /**
+     * Calculate a group's nesting depth
+     */
+    private int calculateDepth(Long groupId) {
+        int depth = 0;
+        ServiceGroup current = groupRepository.findById(groupId).orElse(null);
+
+        while (current != null && current.getParentGroup() != null) {
+            depth++;
+            current = current.getParentGroup();
+        }
+
+        return depth;
+    }
+
+    /**
+     * Update a group
+     */
+    @Transactional
+    public ServiceGroupDTO updateGroup(Long id, UpdateGroupRequest request) {
+        ServiceGroup group = groupRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Group", id));
+
+        // Check for duplicate name on update
+        if (request.getName() != null && !request.getName().equals(group.getName())) {
+            ServiceGroup parent = group.getParentGroup();
+            if (groupRepository.existsByNameAndParentGroup(request.getName(), parent)) {
+                throw new IllegalArgumentException("Group with this name already exists");
+            }
+            group.setName(request.getName());
+        }
+
+        if (request.getDescription() != null) {
+            group.setDescription(request.getDescription());
+        }
+
+        if (request.getColor() != null) {
+            group.setColor(request.getColor());
+        }
+
+        if (request.getIcon() != null) {
+            group.setIcon(request.getIcon());
+        }
+
+        if (request.getSortOrder() != null) {
+            group.setSortOrder(request.getSortOrder());
+        }
+
+        // Update parent
+        if (request.getParentGroupId() != null &&
+                (group.getParentGroup() == null || !group.getParentGroup().getId().equals(request.getParentGroupId()))) {
+
+            Long newParentId = request.getParentGroupId();
+
+            // Cycle check - parent cannot be a descendant
+            if (isDescendant(newParentId, id)) {
+                throw new IllegalArgumentException("Cannot set parent to a descendant of this group (would create a cycle)");
+            }
+
+            ServiceGroup newParent = groupRepository.findById(newParentId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Parent group", newParentId));
+            group.setParentGroup(newParent);
+        } else if (request.getParentGroupId() == null && group.getParentGroup() != null) {
+            // Set as a root group
+            group.setParentGroup(null);
+        }
+
+        ServiceGroup updated = groupRepository.save(group);
+        log.info("Updated service group: id={}, name={}", updated.getId(), updated.getName());
+
+        return toDTO(updated);
+    }
+
+    /**
+     * Check whether the potential parent is a descendant of the group (to prevent cycles)
+     */
+    private boolean isDescendant(Long potentialParentId, Long groupId) {
+        if (potentialParentId.equals(groupId)) {
+            return true;
+        }
+
+        ServiceGroup potentialParent = groupRepository.findById(potentialParentId).orElse(null);
+        if (potentialParent == null) {
+            return false;
+        }
+
+        ServiceGroup current = potentialParent.getParentGroup();
+        while (current != null) {
+            if (current.getId().equals(groupId)) {
+                return true;
+            }
+            current = current.getParentGroup();
+        }
+
+        return false;
+    }
+
+    /**
+     * Delete a group
+     */
+    @Transactional
+    public void deleteGroup(Long id) {
+        ServiceGroup group = groupRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Group", id));
+
+        // Check that the group has no child groups
+        if (!group.getChildGroups().isEmpty()) {
+            throw new IllegalArgumentException("Cannot delete group with child groups. Move or delete child groups first.");
+        }
+
+        groupRepository.delete(group);
+        log.info("Deleted service group: id={}, name={}", id, group.getName());
+    }
+
+    /**
+     * Add services to a group
+     */
+    @Transactional
+    public ServiceGroupDTO addServicesToGroup(Long groupId, List<Long> serviceIds) {
+        ServiceGroup group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new ResourceNotFoundException("Group", groupId));
+
+        List<ServiceEntity> services = serviceRepository.findAllById(serviceIds);
+        if (services.size() != serviceIds.size()) {
+            throw new ResourceNotFoundException("Some services not found");
+        }
+
+        for (ServiceEntity service : services) {
+            // services.group_id is the single source of truth
+            service.setGroup(group);
+            serviceRepository.save(service);
+
+            log.info("Added service {} to group {}", service.getId(), group.getId());
+        }
+
+        return getGroupById(groupId, false);
+    }
+
+    /**
+     * Remove a service from a group
+     */
+    @Transactional
+    public void removeServiceFromGroup(Long groupId, Long serviceId) {
+        ServiceEntity service = serviceRepository.findById(serviceId)
+                .orElseThrow(() -> new ResourceNotFoundException("Service", serviceId));
+
+        if (service.getGroup() == null || service.getGroup().getId() == null || !service.getGroup().getId().equals(groupId)) {
+            throw new ResourceNotFoundException("Service not in group");
+        }
+
+        service.setGroup(null);
+        serviceRepository.save(service);
+
+        log.info("Removed service {} from group {}", serviceId, groupId);
+    }
+
+    /**
+     * Get groups for a service
+     */
+    public List<ServiceGroupDTO> getServiceGroups(Long serviceId) {
+        return serviceRepository.findById(serviceId)
+                .map(ServiceEntity::getGroup)
+                .map(group -> List.of(toDTO(group)))
+                .orElse(List.of());
+    }
+
+    // ========== Private methods ==========
+
+    private List<ServiceGroupDTO> buildGroupTree(List<ServiceGroup> allGroups, Long parentId) {
+        return allGroups.stream()
+                .filter(g -> {
+                    if (parentId == null) {
+                        return g.getParentGroup() == null;
+                    }
+                    return g.getParentGroup() != null && g.getParentGroup().getId().equals(parentId);
+                })
+                .map(group -> {
+                    ServiceGroupDTO dto = toDTOWithServiceCount(group);
+                    dto.setChildGroups(buildGroupTree(allGroups, group.getId()));
+                    return dto;
+                })
+                .collect(Collectors.toList());
+    }
+
+    private ServiceGroupDTO toDTO(ServiceGroup group) {
+        return ServiceGroupDTO.builder()
+                .id(group.getId())
+                .name(group.getName())
+                .description(group.getDescription())
+                .parentGroupId(group.getParentGroup() != null ? group.getParentGroup().getId() : null)
+                .parentGroupName(group.getParentGroup() != null ? group.getParentGroup().getName() : null)
+                .color(group.getColor())
+                .icon(group.getIcon())
+                .sortOrder(group.getSortOrder())
+                .createdAt(group.getCreatedAt() != null ? group.getCreatedAt().atZone(java.time.ZoneOffset.UTC).toInstant() : null)
+                .updatedAt(group.getUpdatedAt() != null ? group.getUpdatedAt().atZone(java.time.ZoneOffset.UTC).toInstant() : null)
+                .build();
+    }
+
+    private ServiceGroupDTO toDTOWithServiceCount(ServiceGroup group) {
+        ServiceGroupDTO dto = toDTO(group);
+        dto.setServiceCount(groupRepository.countServicesByGroupId(group.getId()));
+        return dto;
+    }
+
+    private ServiceGroupDTO.GroupServiceDTO toServiceDTO(ServiceEntity service) {
+        return ServiceGroupDTO.GroupServiceDTO.builder()
+                .id(service.getId())
+                .name(service.getName())
+                .openApiUrl(service.getOpenApiUrl())
+                .description(service.getDescription())
+                .enabled(service.isEnabled())
+                .addedAt(service.getCreatedAt() != null ? service.getCreatedAt() : null)
+                .build();
+    }
+}

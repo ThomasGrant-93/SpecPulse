@@ -3,6 +3,8 @@ package com.specpulse.version;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.specpulse.exception.ResourceNotFoundException;
 import com.specpulse.parser.OpenApiParser;
+import com.specpulse.version.application.VersionService;
+import com.specpulse.version.infrastructure.SpecVersionRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

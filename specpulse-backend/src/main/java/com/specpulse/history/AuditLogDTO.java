@@ -2,6 +2,8 @@ package com.specpulse.history;
 
 import java.time.Instant;
 
+import com.specpulse.history.domain.AuditLogEntity;
+
 public record AuditLogDTO(
         Long id,
         Long serviceId,

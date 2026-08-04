@@ -2,7 +2,7 @@ package com.specpulse.api;
 
 import com.specpulse.scheduler.PullAllResult;
 import com.specpulse.scheduler.PullResult;
-import com.specpulse.scheduler.SpecPullScheduler;
+import com.specpulse.scheduler.application.SpecPullScheduler;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;

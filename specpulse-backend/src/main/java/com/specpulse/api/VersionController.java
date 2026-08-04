@@ -1,7 +1,7 @@
 package com.specpulse.api;
 
 import com.specpulse.version.SpecVersionDTO;
-import com.specpulse.version.VersionService;
+import com.specpulse.version.application.VersionService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 

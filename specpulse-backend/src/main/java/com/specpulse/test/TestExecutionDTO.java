@@ -1,5 +1,6 @@
 package com.specpulse.test;
 
+import com.specpulse.test.domain.TestExecutionEntity;
 import java.time.Instant;
 
 public record TestExecutionDTO(
