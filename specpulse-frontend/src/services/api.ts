@@ -26,6 +26,40 @@ const API_BASE = '/api/v1';
 
 const isTestEnv = isTestEnvironment();
 
+function decodeJwtPayload(token: string): any | null {
+    try {
+        const parts = token.split('.');
+        if (parts.length < 2) return null;
+        const payloadB64 = parts[1]
+            .replace(/-/g, '+')
+            .replace(/_/g, '/');
+        const pad = '='.repeat((4 - (payloadB64.length % 4)) % 4);
+        const b64 = payloadB64 + pad;
+
+        // Node (tests) + browser support.
+        if (typeof Buffer !== 'undefined') {
+            return JSON.parse(Buffer.from(b64, 'base64').toString('utf8'));
+        }
+
+        // eslint-disable-next-line no-undef
+        const decoded = atob(b64);
+        const json = decodeURIComponent(
+            Array.from(decoded)
+                .map((c) => `%${c.charCodeAt(0).toString(16).padStart(2, '0')}`)
+                .join('')
+        );
+        return JSON.parse(json);
+    } catch {
+        return null;
+    }
+}
+
+function getJwtType(token: string): string | null {
+    const payload = decodeJwtPayload(token);
+    const typ = payload?.typ;
+    return typeof typ === 'string' ? typ : null;
+}
+
 export const api = axios.create({
     baseURL: API_BASE,
     headers: {
@@ -38,14 +72,25 @@ api.interceptors.request.use(
     (config) => {
         // Attach access token for backend JWT auth (don't override explicit Authorization).
         const access = getAccessToken();
+
+        if (access) {
+            const jwtType = getJwtType(access);
+            // Never attach refresh tokens as Authorization bearer tokens.
+            if (jwtType === 'refresh') {
+                clearTokens();
+            }
+        }
+
+        const effectiveAccess = getAccessToken();
         const currentHeaders = config.headers ?? {};
         const hasAuthHeader =
-            typeof (currentHeaders as any).Authorization === 'string' ||
-            typeof (currentHeaders as any).authorization === 'string';
-        if (access && !hasAuthHeader) {
+            (typeof (currentHeaders as any).Authorization === 'string' && (currentHeaders as any).Authorization.trim() !== '') ||
+            (typeof (currentHeaders as any).authorization === 'string' && (currentHeaders as any).authorization.trim() !== '');
+
+        if (effectiveAccess && !hasAuthHeader) {
             config.headers = {
                 ...(currentHeaders as any),
-                Authorization: `Bearer ${access}`,
+                Authorization: `Bearer ${effectiveAccess}`,
             } as any;
         }
 
