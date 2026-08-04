@@ -1,9 +1,9 @@
 package com.specpulse.test;
 
-import com.specpulse.auth.entity.PermissionEntity;
-import com.specpulse.auth.entity.RoleEntity;
-import com.specpulse.auth.entity.UserEntity;
-import com.specpulse.auth.repository.UserRepository;
+import com.specpulse.auth.domain.PermissionEntity;
+import com.specpulse.auth.domain.RoleEntity;
+import com.specpulse.auth.domain.UserEntity;
+import com.specpulse.auth.infrastructure.UserRepository;
 import com.specpulse.auth.security.JwtService;
 import com.specpulse.auth.security.RbacPermissions;
 import com.specpulse.auth.security.RbacRoles;

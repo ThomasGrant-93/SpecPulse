@@ -1,6 +1,6 @@
 package com.specpulse.api;
 
-import com.specpulse.auth.repository.UserRepository;
+import com.specpulse.auth.infrastructure.UserRepository;
 import com.specpulse.auth.security.JwtService;
 import com.specpulse.proxy.ExternalApiProxyResponse;
 import com.specpulse.proxy.ExternalApiProxyService;

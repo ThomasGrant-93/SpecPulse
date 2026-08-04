@@ -1,4 +1,4 @@
-package com.specpulse.auth.entity;
+package com.specpulse.auth.domain;
 
 import jakarta.persistence.*;
 import lombok.Getter;

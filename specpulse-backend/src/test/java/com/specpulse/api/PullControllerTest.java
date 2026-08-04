@@ -1,10 +1,10 @@
 package com.specpulse.api;
 
-import com.specpulse.auth.repository.UserRepository;
+import com.specpulse.auth.infrastructure.UserRepository;
 import com.specpulse.auth.security.JwtService;
 import com.specpulse.scheduler.PullAllResult;
 import com.specpulse.scheduler.PullResult;
-import com.specpulse.scheduler.SpecPullScheduler;
+import com.specpulse.scheduler.application.SpecPullScheduler;
 import com.specpulse.test.JwtTestUtil;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

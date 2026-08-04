@@ -1,11 +1,11 @@
 package com.specpulse.auth.bootstrap;
 
-import com.specpulse.auth.entity.PermissionEntity;
-import com.specpulse.auth.entity.RoleEntity;
-import com.specpulse.auth.entity.UserEntity;
-import com.specpulse.auth.repository.PermissionRepository;
-import com.specpulse.auth.repository.RoleRepository;
-import com.specpulse.auth.repository.UserRepository;
+import com.specpulse.auth.domain.PermissionEntity;
+import com.specpulse.auth.domain.RoleEntity;
+import com.specpulse.auth.domain.UserEntity;
+import com.specpulse.auth.infrastructure.PermissionRepository;
+import com.specpulse.auth.infrastructure.RoleRepository;
+import com.specpulse.auth.infrastructure.UserRepository;
 import com.specpulse.auth.security.RbacPermissions;
 import com.specpulse.auth.security.RbacRoles;
 import org.springframework.beans.factory.annotation.Value;

@@ -1,9 +1,9 @@
 package com.specpulse.auth.security;
 
-import com.specpulse.auth.entity.PermissionEntity;
-import com.specpulse.auth.entity.RoleEntity;
-import com.specpulse.auth.entity.UserEntity;
-import com.specpulse.auth.repository.UserRepository;
+import com.specpulse.auth.domain.PermissionEntity;
+import com.specpulse.auth.domain.RoleEntity;
+import com.specpulse.auth.domain.UserEntity;
+import com.specpulse.auth.infrastructure.UserRepository;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.transaction.annotation.Transactional;
 

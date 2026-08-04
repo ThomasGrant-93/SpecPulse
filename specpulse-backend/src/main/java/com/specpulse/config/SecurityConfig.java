@@ -1,7 +1,7 @@
 package com.specpulse.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.specpulse.auth.repository.UserRepository;
+import com.specpulse.auth.infrastructure.UserRepository;
 import com.specpulse.auth.security.*;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;

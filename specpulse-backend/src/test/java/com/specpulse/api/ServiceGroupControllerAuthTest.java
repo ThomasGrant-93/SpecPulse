@@ -1,12 +1,12 @@
 package com.specpulse.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.specpulse.auth.repository.UserRepository;
+import com.specpulse.auth.infrastructure.UserRepository;
 import com.specpulse.auth.security.JwtService;
 import com.specpulse.group.CreateGroupRequest;
 import com.specpulse.group.ServiceGroupController;
 import com.specpulse.group.ServiceGroupDTO;
-import com.specpulse.group.ServiceGroupService;
+import com.specpulse.group.application.ServiceGroupService;
 import com.specpulse.test.JwtTestUtil;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

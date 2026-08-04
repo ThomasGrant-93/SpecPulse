@@ -1,6 +1,6 @@
 package com.specpulse.api;
 
-import com.specpulse.auth.repository.UserRepository;
+import com.specpulse.auth.infrastructure.UserRepository;
 import com.specpulse.proxy.ExternalApiProxyService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

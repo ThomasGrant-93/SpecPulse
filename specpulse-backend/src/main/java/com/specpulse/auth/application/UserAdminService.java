@@ -1,9 +1,9 @@
-package com.specpulse.auth.service;
+package com.specpulse.auth.application;
 
-import com.specpulse.auth.entity.RoleEntity;
-import com.specpulse.auth.entity.UserEntity;
-import com.specpulse.auth.repository.RoleRepository;
-import com.specpulse.auth.repository.UserRepository;
+import com.specpulse.auth.domain.RoleEntity;
+import com.specpulse.auth.domain.UserEntity;
+import com.specpulse.auth.infrastructure.RoleRepository;
+import com.specpulse.auth.infrastructure.UserRepository;
 import com.specpulse.exception.DuplicateResourceException;
 import com.specpulse.exception.ResourceNotFoundException;
 import jakarta.validation.constraints.Email;

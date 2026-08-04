@@ -2,7 +2,7 @@ package com.specpulse.auth.api;
 
 import com.specpulse.auth.security.JwtPrincipal;
 import com.specpulse.auth.security.JwtProperties;
-import com.specpulse.auth.service.AuthService;
+import com.specpulse.auth.application.AuthService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.servlet.http.HttpServletRequest;

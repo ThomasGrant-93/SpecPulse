@@ -1,6 +1,6 @@
 package com.specpulse.auth.api;
 
-import com.specpulse.auth.service.UserAdminService;
+import com.specpulse.auth.application.UserAdminService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

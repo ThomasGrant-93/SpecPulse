@@ -1,4 +1,4 @@
-package com.specpulse.auth.entity;
+package com.specpulse.auth.domain;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;

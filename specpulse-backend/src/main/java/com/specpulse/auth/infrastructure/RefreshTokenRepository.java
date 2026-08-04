@@ -1,6 +1,6 @@
-package com.specpulse.auth.repository;
+package com.specpulse.auth.infrastructure;
 
-import com.specpulse.auth.entity.RefreshTokenEntity;
+import com.specpulse.auth.domain.RefreshTokenEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.LocalDateTime;

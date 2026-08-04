@@ -1,8 +1,8 @@
 package com.specpulse.api;
 
-import com.specpulse.auth.repository.UserRepository;
+import com.specpulse.auth.infrastructure.UserRepository;
 import com.specpulse.version.SpecVersionDTO;
-import com.specpulse.version.VersionService;
+import com.specpulse.version.application.VersionService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

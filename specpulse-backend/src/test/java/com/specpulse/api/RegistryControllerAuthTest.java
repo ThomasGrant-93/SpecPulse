@@ -2,12 +2,12 @@ package com.specpulse.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.specpulse.api.mapper.RegistryApiMapper;
-import com.specpulse.auth.entity.RoleEntity;
-import com.specpulse.auth.entity.UserEntity;
-import com.specpulse.auth.repository.UserRepository;
+import com.specpulse.auth.domain.RoleEntity;
+import com.specpulse.auth.domain.UserEntity;
+import com.specpulse.auth.infrastructure.UserRepository;
 import com.specpulse.auth.security.JwtService;
-import com.specpulse.registry.RegistryService;
-import com.specpulse.registry.RegistryService.CreateServiceRequest;
+import com.specpulse.registry.application.RegistryService;
+import com.specpulse.registry.application.RegistryService.CreateServiceRequest;
 import com.specpulse.registry.ServiceDTO;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

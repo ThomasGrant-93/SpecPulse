@@ -1,6 +1,6 @@
-package com.specpulse.auth.repository;
+package com.specpulse.auth.infrastructure;
 
-import com.specpulse.auth.entity.UserEntity;
+import com.specpulse.auth.domain.UserEntity;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 

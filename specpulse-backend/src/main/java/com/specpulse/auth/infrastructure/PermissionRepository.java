@@ -1,6 +1,6 @@
-package com.specpulse.auth.repository;
+package com.specpulse.auth.infrastructure;
 
-import com.specpulse.auth.entity.PermissionEntity;
+import com.specpulse.auth.domain.PermissionEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

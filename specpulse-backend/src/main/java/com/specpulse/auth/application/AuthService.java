@@ -1,12 +1,12 @@
-package com.specpulse.auth.service;
+package com.specpulse.auth.application;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.specpulse.auth.entity.RefreshTokenEntity;
-import com.specpulse.auth.entity.RoleEntity;
-import com.specpulse.auth.entity.UserEntity;
-import com.specpulse.auth.repository.RefreshTokenRepository;
-import com.specpulse.auth.repository.UserRepository;
+import com.specpulse.auth.domain.RefreshTokenEntity;
+import com.specpulse.auth.domain.RoleEntity;
+import com.specpulse.auth.domain.UserEntity;
+import com.specpulse.auth.infrastructure.RefreshTokenRepository;
+import com.specpulse.auth.infrastructure.UserRepository;
 import com.specpulse.auth.security.JwtProperties;
 import com.specpulse.auth.security.JwtService;
 import com.specpulse.auth.security.TokenHashUtil;

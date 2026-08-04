@@ -1,6 +1,6 @@
 package com.specpulse.auth.api;
 
-import com.specpulse.auth.service.UserAdminService;
+import com.specpulse.auth.application.UserAdminService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;

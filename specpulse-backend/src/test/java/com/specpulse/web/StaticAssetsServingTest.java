@@ -1,9 +1,9 @@
 package com.specpulse.web;
 
 import com.specpulse.api.DiffController;
-import com.specpulse.auth.repository.UserRepository;
+import com.specpulse.auth.infrastructure.UserRepository;
 import com.specpulse.config.WebConfig;
-import com.specpulse.diff.DiffService;
+import com.specpulse.diff.application.DiffService;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
