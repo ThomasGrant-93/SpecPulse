@@ -121,6 +121,33 @@ describe('ServiceForm', () => {
             });
         });
 
+        it('should use the axios API client (not fetch) for /registry/validate', async () => {
+            // Guard: in some test environments fetch might be polyfilled.
+            const fetchFn = (globalThis as any).fetch;
+            const fetchSpy = typeof fetchFn === 'function' ? vi.spyOn(globalThis as any, 'fetch') : null;
+
+            renderServiceForm();
+
+            const user = userEvent.setup();
+            await user.type(screen.getByLabelText(/Name/i), 'Test Service');
+            await user.type(
+                screen.getByLabelText(/OpenAPI URL/i),
+                'https://api.example.com/openapi.json'
+            );
+
+            const validateButton = screen.getByRole('button', { name: /Validate/i });
+            await user.click(validateButton);
+
+            await waitFor(() => {
+                expect(screen.getByText(/OpenAPI specification is valid/i)).toBeInTheDocument();
+            });
+
+            if (fetchSpy) {
+                expect(fetchSpy).not.toHaveBeenCalled();
+                fetchSpy.mockRestore();
+            }
+        });
+
         it('should show validation errors from API', async () => {
             server.use(
                 mockValidationHandler({
