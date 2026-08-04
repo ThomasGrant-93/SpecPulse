@@ -34,8 +34,7 @@ public class AdminUsersController {
             @Valid @RequestBody UserAdminService.CreateUserRequest request
     ) {
         var created = userAdminService.createUser(request);
-        return ResponseEntity.created(URI.create("/api/v1/admin/users/" + created.id()))
-                .body(created);
+        return ResponseEntity.created(URI.create("/api/v1/admin/users/" + created.id())).body(created);
     }
 
     @PutMapping("/{id}")
