@@ -51,10 +51,15 @@ export default function AuditPage() {
     } = usePagination(filteredLogs, { initialPage: 1, initialPageSize: 20 });
 
     const getEventColor = (eventType: string) => {
-        if (eventType.includes('FAILED') || eventType.includes('ERROR'))
+        if (eventType.includes('FAILED') || eventType.includes('ERROR')) {
             return 'bg-red-100 text-red-800';
-        if (eventType.includes('BREAKING')) return 'bg-orange-100 text-orange-800';
-        if (eventType.includes('CREATED')) return 'bg-green-100 text-green-800';
+        }
+        if (eventType.includes('BREAKING')) {
+            return 'bg-orange-100 text-orange-800';
+        }
+        if (eventType.includes('CREATED')) {
+            return 'bg-green-100 text-green-800';
+        }
         return 'bg-gray-100 text-gray-800';
     };
 
