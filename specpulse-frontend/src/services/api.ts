@@ -41,7 +41,6 @@ function decodeJwtPayload(token: string): any | null {
             return JSON.parse(Buffer.from(b64, 'base64').toString('utf8'));
         }
 
-        // eslint-disable-next-line no-undef
         const decoded = atob(b64);
         const json = decodeURIComponent(
             Array.from(decoded)

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import GroupSelector from './GroupSelector';
+import { api } from '@/services/api';
 
 interface BulkGroupAssignmentProps {
     serviceIds: number[];
@@ -19,14 +20,7 @@ export default function BulkGroupAssignment({
     const assignMutation = useMutation({
         mutationFn: async (groupId: number) => {
             const promises = serviceIds.map((serviceId) =>
-                fetch(`/api/v1/registry/${serviceId}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ groupId }),
-                }).then((res) => {
-                    if (!res.ok) throw new Error(`Failed to update service ${serviceId}`);
-                    return res.json();
-                })
+                api.put(`/registry/${serviceId}`, { groupId }).then((res) => res.data)
             );
             await Promise.all(promises);
         },

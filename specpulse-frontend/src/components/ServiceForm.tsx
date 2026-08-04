@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import type { CreateServiceRequest, Service } from '@/types';
 import GroupSelector from './GroupSelector';
 import { logger } from '@/utils/logger';
+import { api } from '@/services/api';
 
 interface ServiceFormProps {
     onSubmit: (data: CreateServiceRequest) => void;
@@ -41,13 +42,19 @@ export default function ServiceForm({ onSubmit, onCancel, initialData }: Service
         setValidationSuccess(false);
 
         try {
-            const response = await fetch('/api/v1/registry/validate', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, openApiUrl }),
-            });
+            const result = await api
+                .post('/registry/validate', { name, openApiUrl })
+                .then((res) => res.data);
 
-            const result = await response.json();
+            const isValidResponse =
+                result &&
+                typeof result === 'object' &&
+                typeof (result as any).valid === 'boolean' &&
+                Array.isArray((result as any).errors);
+
+            if (!isValidResponse) {
+                throw new Error('Invalid validation response');
+            }
 
             if (!result.valid) {
                 setValidationErrors(result.errors);
